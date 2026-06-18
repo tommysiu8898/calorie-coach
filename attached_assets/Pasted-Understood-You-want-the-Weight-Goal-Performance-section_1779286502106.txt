@@ -1,0 +1,55 @@
+Understood. You want the **Weight & Goal Performance section** to now include a **chart view** of weight change over time (weekly / monthly toggles), with a goal line vs real‑time data points, and optionally net calories vs target calories.
+
+Here is the **updated, complete prompt** for Replit. It keeps your food logs untouched, adds the dashboard, burned section, weight section, and now includes an interactive chart inside the weight section.
+
+---
+
+**Final Prompt for Replit (with weight chart, weekly/monthly views, goal line vs real data):**
+
+> I have an existing Calories Coach homepage with a **fully working food logs section** (list of foods, add new food with name + kcal, delete items). This section must remain **100% unchanged** – no changes to its HTML, CSS, or JavaScript logic.
+>
+> I need you to **add new features** to the existing page, arranged in this **exact order** from top to bottom:
+>
+> **1. Dashboard (top section)**  
+> - Show **calories eaten** (total from my existing food logs)  
+> - Show **calories burned** (calculated from new sources below)  
+> - Show **net calories** (eaten – burned)  
+> - Show **remaining calories** (daily goal 2305 – net)  
+> - Real‑time updates when food logs or burned sources change.
+>
+> **2. Existing food logs section** (unchanged, placed second)  
+> - Keep original appearance, add/delete buttons, list layout, IDs, classes.  
+> - My code already manages `totalEaten` – the dashboard must read that value from my existing variable/DOM.
+>
+> **3. Burned section (new, placed third)**  
+> - **Source A: Apple Health data** – steps → active calories, other active calories, total, “Fetch latest” button (random update).  
+> - **Source B: Secondary exercises** – add/delete manual exercise entries.  
+> - Total burned = Apple Health total + sum of secondary exercises.
+>
+> **4. Weight & Goal Performance section (new, placed fourth – with chart)**  
+> - **Current weight input** (initial 82 kg) with an “Update Weight” button (prompt or inline).  
+> - **Goal weight** fixed at 75 kg.  
+> - **Weight to lose / gained** display (real‑time).  
+> - **Chart area** (using **Chart.js** or lightweight **SVG-based canvas**) that shows:  
+>   - **Weight change over time** (weekly and monthly views – toggle buttons to switch between Week / Month).  
+>   - **Goal line** (horizontal line at 75 kg).  
+>   - **Real data points** (weight entries over past weeks/months).  
+>   - Optionally, **net calories vs target calories** line (target = remaining calories or daily goal) as a secondary dataset on the same chart or a small second chart.  
+> - Chart data must be stored locally (e.g., array of {date, weight}) and update when user logs new weight.  
+> - Simulate some initial weight history (e.g., last 4 weeks: 85, 83.5, 82.8, 82) to demonstrate chart.  
+> - When “Update Weight” is used, add a new entry for today’s date and redraw chart with trend.
+>
+> **Requirements:**  
+> - Keep existing food logs **completely untouched**.  
+> - All new sections (dashboard, burned, weight chart) must work together.  
+> - Mobile‑friendly (max-width 500px, cards).  
+> - Use **Chart.js** (CDN) or a simple canvas library – ensure chart updates correctly on view toggle and weight update.  
+> - Provide **full HTML/CSS/JS** code that merges everything and runs immediately.
+
+---
+
+Copy this prompt into Replit. It will generate a complete homepage with:
+- Dashboard (eaten/burned/net/remaining)
+- Your untouched food logs
+- Burned section (Apple Health + secondary exercises)
+- Weight section with **interactive chart** (weekly/monthly views, goal line vs real weight points, optional net calories vs target)

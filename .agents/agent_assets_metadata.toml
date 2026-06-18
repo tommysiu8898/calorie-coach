@@ -1,0 +1,13 @@
+uploads = []
+
+[[generated]]
+id = "pd0UNBk-mahyIhkXQd44L"
+uri = "file://artifacts/calorie-tracker/assets/images/icon.png"
+type = "image"
+title = "generated_image"
+
+[[outputs]]
+id = "-Y5--VA8C8XPm1b0xzDlK"
+uri = "file://calories-coach.zip"
+type = "unspecified"
+title = "Calories Coach — source code"

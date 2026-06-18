@@ -1,0 +1,24 @@
+diff --git a/build/cjs/vendor/http.js b/build/cjs/vendor/http.js
+index 4ffaac441e3f149ea5da05d26d99f5f604d3c9a3..9889045ee432f1c236cd4030f32b110fa65558f1 100644
+--- a/build/cjs/vendor/http.js
++++ b/build/cjs/vendor/http.js
+@@ -109,7 +109,18 @@ async function respond(res, expoRes) {
+         }
+     }
+     if (expoRes.body) {
+-        await (0, promises_1.pipeline)(node_stream_1.Readable.fromWeb(expoRes.body), res);
++        try {
++            await (0, promises_1.pipeline)(node_stream_1.Readable.fromWeb(expoRes.body), res);
++        }
++        catch (err) {
++            if (err && (err.code === 'ERR_STREAM_DESTROYED' || err.code === 'EPIPE' || err.message === 'Cannot pipe to a closed or destroyed stream')) {
++                // Client disconnected before bundle finished streaming — safe to ignore.
++                // Metro's cache means the next request will be served instantly.
++                if (!res.destroyed) res.destroy();
++            } else {
++                throw err;
++            }
++        }
+     }
+     else {
+         res.end();

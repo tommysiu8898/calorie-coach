@@ -1,0 +1,66 @@
+The build succeeded, but the app crashes immediately after launch — this indicates a **runtime issue**, not a compilation error. The warning about `update.url` and missing channel is unrelated to the crash (it only disables EAS Updates, which wouldn’t cause a launch crash).
+
+## 🔍 Most likely causes for a crash-on-launch in an Expo/React Native app
+
+### 1. **Missing or misconfigured native permissions / entitlements**
+   Your app uses many native modules (HealthKit, Camera, Location, Notifications, etc.). If your `Info.plist` doesn’t include required usage description keys or entitlements, iOS may kill the app during launch.
+
+   **Check your `ios/CaloriesCoach/Info.plist`** for keys like:
+   - `NSHealthShareUsageDescription`
+   - `NSHealthUpdateUsageDescription`
+   - `NSCameraUsageDescription`
+   - `NSLocationWhenInUseUsageDescription`
+   - `NSPhotoLibraryUsageDescription`
+   - `UIBackgroundModes` (if needed)
+
+### 2. **Native module initialization failure**
+   A native module (e.g., `expo-notifications`, `expo-location`, `RNAppleHealthKit`) might crash when trying to set up its delegate or request permissions during `AppDelegate` startup.
+
+   **Action:** Open the app in Xcode and run it on a device/simulator. Look at the **console output** – it will show the exact exception and stack trace. Common culprits are:
+   - HealthKit not available on simulator → check platform.
+   - Missing `AppDelegate` method overrides for certain modules.
+
+### 3. **Code signing / provisioning profile issue**
+   Even if archive succeeds, the installed app may not be signed correctly for the target device.  
+   **Check:** Are you installing a `Release` build on a physical device? Ensure the provisioning profile includes the device’s UDID and supports the required entitlements.
+
+### 4. **Binary compatibility / Framework mismatch**
+   Some CocoaPods frameworks (like `hermes-engine`, `React-Core-prebuilt`) are copied as XCFrameworks. If the slice for the target architecture (arm64) is missing or corrupt, the app will crash at `dyld`.
+
+   **Action:** In Xcode, go to **Window → Devices and Simulators**, select your device, and view the device log. Look for `dyld: Library not loaded` or `Symbol not found` errors.
+
+### 5. **EAS Update misconfiguration (rare but possible)**
+   While the warning itself doesn’t crash the app, if your code relies on `expo-updates` and tries to fetch an update with an invalid URL/channel before the first render, it could cause an unhandled exception.  
+   **Fix:** Run `eas update:configure` and set a default channel in `eas.json`. Or temporarily disable updates by setting `updates.enabled: false` in `app.json`.
+
+## 🛠️ Steps to diagnose the exact crash
+
+1. **Run the app from Xcode** (not directly from the archive) on a physical device.  
+   - Open `ios/CaloriesCoach.xcworkspace`.  
+   - Select your team and signing certificate.  
+   - Build and run (`Cmd+R`).  
+   - Watch the console – the crash reason will be printed.
+
+2. **Check the device crash log**  
+   On your iPhone: **Settings → Privacy & Security → Analytics & Improvements → Analytics Data** → look for a recent log named `CaloriesCoach-*.ips`. Share the contents if you need help interpreting it.
+
+3. **Test in Debug mode** – often, Debug builds give more meaningful error messages than Release.
+
+4. **Enable Debug mode in production build** temporarily:  
+   In `ios/CaloriesCoach/Info.plist`, set `EXUpdatesDebug` to `YES` to see update‑related errors.
+
+5. **Verify all pods are correctly linked** – run `pod install` again and make sure there are no warnings about duplicate frameworks or missing architectures.
+
+## ✅ Immediate fixes to try (even without crash logs)
+
+- **Re‑run `npx expo prebuild --clean`** and then `npx expo run:ios` – this regenerates the native project and ensures all modules are properly configured.
+- **Ensure your `AppDelegate` calls `[super application:didFinishLaunchingWithOptions:]` and initializes modules in the correct order.**  
+  If you have a custom `AppDelegate.m`, make sure it follows the Expo template.
+- **Check `ios/Podfile`** – React Native 0.81 requires specific flags (e.g., `:hermes_enabled => true`). Make sure it matches the Expo SDK version.
+- **If using `expo-dev-client`**, try building a development client first (`eas build --platform ios --profile development`) and test that – it gives better error reporting.
+
+## 📌 Summary of the warning (not the crash cause)
+> `update.url is set to ... but a channel is not specified.`  
+> This only disables over‑the‑air updates. It **does not** crash the app. Fix it with `eas update:configure`.
+
+If you can provide the **device crash log** or the **Xcode console output** from a debug build, I can pinpoint the exact issue. Otherwise, start with step 1 above – running the app directly from Xcode will reveal the crash reason immediately.

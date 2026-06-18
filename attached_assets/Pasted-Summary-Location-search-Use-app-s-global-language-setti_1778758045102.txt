@@ -1,0 +1,238 @@
+Summary
+Location search: Use app’s global language setting → translate only when in Chinese mode → call one API (Google Places) with language parameter set to the app’s language.
+
+Supplements: Integrate iHerb affiliate links (standard offers, no discount negotiation needed). For professional use, explore Fullscript later.
+
+This keeps your codebase lean, maintainable, and consistent.
+
+Would you like me to provide the exact code snippet for Replit (including error handling and timeout) based on this global‑language approach?
+
+provide the exact code snippet for Replit
+We need to provide exact code snippets for Replit. The user wants: location search with keyword mapping based on app's global language setting, and supplement offers (iHerb affiliate). Also ensure the code works in Replit environment (Node.js/Express backend or React Native frontend?). The user is building a React Native app with Replit. Likely need to write backend API endpoints for location search and supplement recommendations. Provide code that can be dropped into Replit's backend (e.g., serverless functions or Express routes). Let's produce clear, copy-pasteable code snippets.
+
+We'll write:
+
+A function to search nearby places using Google Places API with language parameter and keyword mapping for Chinese.
+
+A function to get supplement recommendations with iHerb affiliate links.
+
+Error handling and timeout.
+
+Also note: The user may have a global language setting stored in app state. For backend, we need to receive language as a parameter from frontend.
+
+Provide code for a Replit backend route (e.g., Express). Also mention frontend call example.
+
+Let's produce final answer.
+
+Below are exact, copy‑pasteable code snippets you can drop into your Replit backend (e.g., Express route or Supabase Edge Function). They implement:
+
+Location search – uses app’s global language setting, maps Chinese keywords to English for better API matching, then returns results in the user’s chosen language.
+
+Supplement offers – provides iHerb affiliate links with standard products (no fake discounts).
+
+Error handling & timeout (5 seconds) to prevent hanging.
+
+1. Backend Route: POST /api/search-nearby
+Create a file api/search-nearby.js (or adapt to your Replit route structure).
+
+javascript
+// api/search-nearby.js - for Express.js on Replit
+const axios = require('axios');
+
+// Keyword mapping (Chinese → English) used only when app language = 'zh'
+const keywordMap = {
+  '健身房': 'gym',
+  '瑜伽馆': 'yoga studio',
+  '游泳池': 'swimming pool',
+  '公园': 'park',
+  '运动中心': 'sports center',
+  '羽毛球馆': 'badminton court',
+  '网球场': 'tennis court',
+  '篮球场': 'basketball court',
+  '跑道': 'running track'
+};
+
+// Helper: translate Chinese query to English keyword
+function translateQuery(query, appLanguage) {
+  if (appLanguage !== 'zh') return query;
+  for (const [chinese, english] of Object.entries(keywordMap)) {
+    if (query.includes(chinese)) return english;
+  }
+  return query; // fallback – keep original
+}
+
+// Main search function with timeout
+async function searchNearbyPlaces(query, lat, lng, appLanguage, apiKey) {
+  const translatedQuery = translateQuery(query, appLanguage);
+  const searchTerm = `${translatedQuery} near me`;
+  
+  const url = 'https://maps.googleapis.com/maps/api/place/textsearch/json';
+  const params = {
+    query: searchTerm,
+    location: `${lat},${lng}`,
+    radius: 5000,        // 5km radius
+    language: appLanguage === 'zh' ? 'zh-CN' : 'en',
+    key: apiKey
+  };
+
+  // Timeout after 5 seconds
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+  try {
+    const response = await axios.get(url, { params, signal: controller.signal });
+    clearTimeout(timeoutId);
+    return response.data.results.map(place => ({
+      name: place.name,
+      address: place.formatted_address,
+      rating: place.rating,
+      lat: place.geometry.location.lat,
+      lng: place.geometry.location.lng,
+      types: place.types
+    }));
+  } catch (error) {
+    clearTimeout(timeoutId);
+    if (error.code === 'ECONNABORTED' || error.name === 'AbortError') {
+      throw new Error('Request timeout – please try again');
+    }
+    throw new Error(`Places API error: ${error.message}`);
+  }
+}
+
+// Express route handler
+module.exports = async (req, res) => {
+  // Expect JSON body: { query, lat, lng, appLanguage }
+  const { query, lat, lng, appLanguage } = req.body;
+  
+  if (!query || !lat || !lng || !appLanguage) {
+    return res.status(400).json({ error: 'Missing required fields: query, lat, lng, appLanguage' });
+  }
+
+  const apiKey = process.env.GOOGLE_PLACES_API_KEY;
+  if (!apiKey) {
+    return res.status(500).json({ error: 'Server misconfigured: missing Google API key' });
+  }
+
+  try {
+    const results = await searchNearbyPlaces(query, lat, lng, appLanguage, apiKey);
+    res.json({ success: true, results });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+};
+2. Backend Route: POST /api/supplement-recommend
+Simple iHerb affiliate integration – returns a list of products with affiliate links.
+
+javascript
+// api/supplement-recommend.js
+// Use a static product list for MVP (replace with dynamic API later)
+const iHerbAffiliateId = 'YOUR_AFFILIATE_ID'; // e.g., '1234567'
+
+const productCatalog = [
+  {
+    id: 'prot123',
+    name: 'Whey Protein Isolate',
+    category: 'protein',
+    iherbCode: 'PROT123',   // actual product code on iHerb
+    description: 'Fast‑absorbing protein for muscle recovery.'
+  },
+  {
+    id: 'omega456',
+    name: 'Omega‑3 Fish Oil',
+    category: 'omega',
+    iherbCode: 'FISH456',
+    description: 'High‑potency EPA/DHA for heart & brain health.'
+  },
+  {
+    id: 'multi789',
+    name: 'Daily Multivitamin',
+    category: 'multivitamin',
+    iherbCode: 'MULTI789',
+    description: 'Essential vitamins and minerals for overall wellness.'
+  }
+];
+
+function getAffiliateLink(productCode) {
+  // iHerb affiliate link format:
+  // https://www.iherb.com/pr/[product-code]?rcode=[affiliate-id]
+  return `https://www.iherb.com/pr/${productCode}?rcode=${iHerbAffiliateId}`;
+}
+
+module.exports = async (req, res) => {
+  const { goal, appLanguage } = req.body;
+  // Simple keyword matching to recommend products
+  let recommended = [];
+  const lowerGoal = (goal || '').toLowerCase();
+  
+  if (lowerGoal.includes('protein') || lowerGoal.includes('muscle')) {
+    recommended = productCatalog.filter(p => p.category === 'protein');
+  } else if (lowerGoal.includes('omega') || lowerGoal.includes('fish oil') || lowerGoal.includes('heart')) {
+    recommended = productCatalog.filter(p => p.category === 'omega');
+  } else {
+    recommended = productCatalog; // fallback
+  }
+  
+  const results = recommended.map(p => ({
+    name: p.name,
+    description: p.description,
+    affiliateLink: getAffiliateLink(p.iherbCode),
+    // No fake discount – just standard iHerb price
+    priceNote: 'Price as shown on iHerb'
+  }));
+  
+  res.json({ success: true, results, message: appLanguage === 'zh' ? '通过iHerb购买正品' : 'Shop genuine supplements on iHerb' });
+};
+3. Frontend Call Examples (React Native)
+Add these functions to your TestAI.js or any screen.
+
+javascript
+// Example: Search nearby gyms
+async function searchNearby(query, lat, lng, appLanguage) {
+  try {
+    const response = await fetch('https://your-replit-app.repl.co/api/search-nearby', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query, lat, lng, appLanguage })
+    });
+    const data = await response.json();
+    if (data.success) {
+      console.log('Places:', data.results);
+      return data.results;
+    } else {
+      console.error('Search error:', data.error);
+    }
+  } catch (err) {
+    console.error('Network error:', err);
+  }
+}
+
+// Example: Get supplement recommendations
+async function getSupplementRecommendations(goal, appLanguage) {
+  const response = await fetch('https://your-replit-app.repl.co/api/supplement-recommend', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ goal, appLanguage })
+  });
+  const data = await response.json();
+  if (data.success) return data.results;
+  else console.error(data.error);
+}
+4. Environment Variables in Replit
+Add these to Secrets (Tools → Secrets):
+
+GOOGLE_PLACES_API_KEY – your Google Cloud API key with Places API enabled.
+
+I_HERB_AFFILIATE_ID (optional) – replace YOUR_AFFILIATE_ID in the code.
+
+5. How to Use in Coach Chat
+When the user asks “find gyms near me” or “recommend protein powder”:
+
+Parse the intent (can use Kimi VL or simple keyword matching).
+
+If location‑related, call /api/search-nearby with appLanguage from user settings.
+
+If supplement‑related, call /api/supplement-recommend with user’s goal and language.
+
+Format the response nicely (e.g., list of names + addresses for gyms; product names + affiliate links for supplements).
+
+The keyword mapping will automatically translate Chinese queries like “附近的健身房” → “gym” for the API, while the API returns results in Chinese because of language=zh-CN. No extra language detection needed.

@@ -1,0 +1,33 @@
+{
+  "cli": {
+    "version": ">= 19.0.5",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal"
+    },
+    "preview": {
+      "distribution": "internal"
+    },
+    "production": {
+      "autoIncrement": true
+    },
+    "internal-test": {
+      "distribution": "internal",
+      "ios": {
+        "buildConfiguration": "Release"
+      }
+    },
+    "internaldis_calorie_coach": {
+      "distribution": "internal",
+      "ios": {
+        "buildConfiguration": "Release"
+      }
+    }
+  },
+  "submit": {
+    "production": {}
+  }
+}

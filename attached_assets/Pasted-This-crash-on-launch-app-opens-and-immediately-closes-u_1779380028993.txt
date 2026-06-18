@@ -1,0 +1,82 @@
+This crash-on-launch (app opens and immediately closes) usually indicates a **missing entitlement**, **unhandled native exception**, or **missing environment variable** that causes the app to abort during initialization.
+
+## 🔍 Step-by-step debugging
+
+### 1. Check if the app is actually crashing or just missing UI
+- After install, try opening the app. Does it show a splash screen then disappear? Or does it never show anything?
+- Connect your iPhone to a Mac and open **Console.app** (or Xcode → Devices & Simulators → select your device → Open Console). Filter by your app's bundle ID (likely `com.ktmcheung9.calorie-tracker`). Look for crash logs or error messages.
+
+### 2. Most likely culprit: Missing HealthKit entitlement
+Your `app.json` uses `react-native-health`, which requires the HealthKit entitlement. Without it, the app will crash on launch when the library tries to initialize.
+
+**Fix:** Add the HealthKit entitlement explicitly using `expo-build-properties`:
+
+```bash
+cd /home/runner/workspace/artifacts/calorie-tracker
+npx expo install expo-build-properties
+```
+
+Then add to `app.json`:
+
+```bash
+jq '.expo.plugins += [["expo-build-properties", {"ios": {"usesAppleSignIn": false, "entitlements": {"com.apple.developer.healthkit": true}}]]' app.json > app.json.tmp && mv app.json.tmp app.json
+```
+
+### 3. Missing Clerk environment variable in the native build
+Even though you set `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY` via `eas env:create`, ensure it's linked to the `internal-test` profile environment.
+
+Check your `eas.json` – does the `internal-test` profile specify an environment?
+
+```bash
+cat eas.json | jq '.build["internal-test"]'
+```
+
+If it doesn't have `"environment": "production"`, add it:
+
+```bash
+jq '.build["internal-test"].environment = "production"' eas.json > eas.json.tmp && mv eas.json.tmp eas.json
+```
+
+Then rebuild.
+
+### 4. Location permissions missing in Info.plist
+Your `app.json` only has `expo-location` as a string plugin. That provides basic foreground location. But if your code requests **always** or **background** location without the proper keys, it might crash.
+
+**Fix:** Convert the location plugin to the array form with permission messages:
+
+```bash
+jq '.expo.plugins = (.expo.plugins | map(if . == "expo-location" then ["expo-location", {"locationAlwaysAndWhenInUsePermission": "Allow Calorie Coach to use your location.", "isIosBackgroundLocationEnabled": true}] else . end))' app.json > app.json.tmp && mv app.json.tmp app.json
+```
+
+### 5. Rebuild with all fixes
+
+After making these changes, rebuild:
+
+```bash
+eas build --platform ios --profile internal-test --clear-cache
+```
+
+Install the new build on your iPhone. It should no longer crash.
+
+## 📋 Quick checklist before rebuilding
+
+| Requirement | Checked? |
+|-------------|----------|
+| HealthKit entitlement added via `expo-build-properties` | ☐ |
+| `react-native-health` plugin already in `app.json` (you have it) | ✅ |
+| `expo-location` plugin converted to array form with permission messages | ☐ |
+| `internal-test` profile has `"environment": "production"` | ☐ |
+| `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY` exists in EAS env for production | ☐ (you created it) |
+
+## 💡 If still crashing after rebuild
+
+Run a **development build** (debuggable) to see the actual error:
+
+```bash
+jq '.build["development"] = {"developmentClient": true, "distribution": "internal", "ios": {"buildConfiguration": "Debug"}}' eas.json > eas.json.tmp && mv eas.json.tmp eas.json
+eas build --platform ios --profile development --clear-cache
+```
+
+This build will have full logging and can be debugged via Safari Web Inspector or Xcode console. The error message will tell you exactly what's missing.
+
+Let me know the output after rebuilding.

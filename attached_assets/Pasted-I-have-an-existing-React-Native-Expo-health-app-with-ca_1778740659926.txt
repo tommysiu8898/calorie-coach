@@ -1,0 +1,76 @@
+I have an existing React Native (Expo) health app with calorie tracking (photo → Kimi VL analysis → saved to Replit DB). Now I want to add three differentiating features that go beyond CAL AI: **Community & Gamification**, **AI Agent Ecosystem**, and a **Partner Marketplace Flywheel**.
+
+Do NOT rebuild the calorie tracking part. Extend the existing codebase.
+
+## 1. Community & Gamification
+
+### Database additions (run SQL on Replit DB):
+- Create table `user_stats` (user_id uuid, vitality_score int default 0, streak_days int default 0, total_meals_logged int default 0, last_log_date date).
+- Create table `community_challenges` (id serial, name text, start_date date, end_date date, goal_type text, goal_value int, reward_badge text).
+- Create table `user_challenge_progress` (user_id uuid, challenge_id int, progress int, completed boolean).
+
+### Backend functions:
+- Write a serverless function `update_vitality_score` that:
+  - Calculates a score (0‑1000) based on macros balance, calorie adherence, and logging consistency.
+  - Updates `user_stats` and returns the score.
+- Write a function `get_leaderboard` that returns top 50 users by vitality_score this week.
+
+### Frontend screens:
+- **LeaderboardScreen**: Shows ranking with user avatars, scores, and a “This week’s top foodies” header.
+- **ChallengeCard** component: Displays active challenges with progress bars. Add a “Join Challenge” button.
+- Integrate a **Profile Streak Indicator** on the existing dashboard.
+
+## 2. AI Agent Ecosystem (Your Proprietary Advantage)
+
+Use Replit’s AI Integrations (OpenRouter) with Kimi‑VL (model: `moonshotai/kimi-vl-a3b-thinking:free`). Create **three agent functions** that share the same user context.
+
+### Agent 1: Analyzer Agent (Nutritionist)
+- Endpoint: `/api/agent/analyze`
+- Input: `user_id` (fetch last 7 days of meal_entries)
+- Output: JSON with `summary`, `deficiencies` (e.g., low protein), `recommendation_text`.
+- Use a system prompt that emphasizes macro trend identification.
+
+### Agent 2: Advisor Agent (Coach)
+- Endpoint: `/api/agent/advise`
+- Input: `user_query` (free text) + recent meal data
+- Output: Natural language response (e.g., “Based on your high‑carb lunch, try a lean protein dinner like grilled chicken.”).
+- Use LangGraph‑style simple routing: if query contains “supplement” → route to supplement knowledge base; if “gym” → route to partner function.
+
+### Agent 3: Connector Agent (Referrer)
+- Endpoint: `/api/agent/connect`
+- Input: `user_id`, `service_type` (gym/supplement/wellness)
+- Logic:
+  - If `service_type == 'gym'`, call a function `get_nearby_partners` (initially returns a hardcoded list of 5 mock gyms with names, addresses, and a promo code).
+  - Add a `reasoning` field explaining why this recommendation matches user’s data (e.g., “Your protein intake is below target; this gym offers a nutrition workshop.”).
+
+### Frontend integration:
+- Create a new **AI Coach Tab** (bottom tab) with a chat interface.
+- Show three quick action chips: “Analyze my week”, “Ask Coach”, “Find a gym for me”.
+- When user taps “Find a gym”, call `/api/agent/connect` and display a card with partner info and a “Get Offer” button (stub for now).
+
+## 3. Partner Marketplace Flywheel (Mock for MVP)
+
+### Database additions:
+- Create table `partners` (id serial, name text, category text, location text, commission_rate int, is_active boolean).
+- Create table `partner_offers` (partner_id int, offer_text text, valid_until date).
+
+### Backend functions:
+- `get_partner_offers(user_id, category)` – returns active offers.
+- `track_click` – logs when a user clicks “Get Offer” for future commission tracking.
+
+### Admin panel (simple web view):
+- Use a basic React component at `/admin/partners` (protected by a hardcoded token) that lists partners and allows toggling active status.
+
+## 4. Integration & Testing Instructions
+
+- All new functions must be written as Replit serverless functions (under `/api/`).
+- Use the existing OpenRouter API key stored in Replit Secrets.
+- For the agent responses, enforce structured JSON (similar to the calorie prompt).
+- After code is generated, run `npm run start` to test on Expo Go.
+
+The final output should include:
+- All SQL migration scripts.
+- Full code for each new function and screen.
+- A short instruction on how to test the AI Agent flow (e.g., “Ask: ‘I feel tired after lunch, what should I do?’”).
+
+Do not break the existing calorie tracking functionality. Build incrementally.

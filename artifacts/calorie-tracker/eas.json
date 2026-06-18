@@ -1,0 +1,79 @@
+{
+  "cli": {
+    "version": ">= 16.0.0",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "channel": "development",
+      "ios": {
+        "image": "latest"
+      },
+      "env": {
+        "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_test_YWJvdmUtZXdlLTE4LmNsZXJrLmFjY291bnRzLmRldiQ",
+        "EXPO_PUBLIC_REPL_ID": "9dbd35a4-ef5e-4ed0-94ae-93e65aa93bf5"
+      }
+    },
+    "development-simulator": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "ios": {
+        "simulator": true,
+        "image": "latest"
+      },
+      "channel": "development",
+      "env": {
+        "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_test_YWJvdmUtZXdlLTE4LmNsZXJrLmFjY291bnRzLmRldiQ",
+        "EXPO_PUBLIC_REPL_ID": "9dbd35a4-ef5e-4ed0-94ae-93e65aa93bf5"
+      }
+    },
+    "preview": {
+      "distribution": "internal",
+      "channel": "preview",
+      "environment": "production",
+      "ios": {
+        "image": "latest"
+      },
+      "env": {
+        "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_test_YWJvdmUtZXdlLTE4LmNsZXJrLmFjY291bnRzLmRldiQ"
+      }
+    },
+    "production": {
+      "autoIncrement": true,
+      "channel": "production",
+      "ios": {
+        "image": "latest"
+      },
+      "env": {
+        "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_test_YWJvdmUtZXdlLTE4LmNsZXJrLmFjY291bnRzLmRldiQ"
+      }
+    },
+    "internal-test": {
+      "distribution": "internal",
+      "ios": {
+        "buildConfiguration": "Release",
+        "image": "latest"
+      },
+      "env": {
+        "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_test_YWJvdmUtZXdlLTE4LmNsZXJrLmFjY291bnRzLmRldiQ",
+        "EXPO_PUBLIC_REPL_ID": "9dbd35a4-ef5e-4ed0-94ae-93e65aa93bf5"
+      }
+    },
+    "internaldis_calorie_coach": {
+      "distribution": "internal",
+      "ios": {
+        "buildConfiguration": "Release",
+        "image": "latest"
+      },
+      "env": {
+        "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_test_YWJvdmUtZXdlLTE4LmNsZXJrLmFjY291bnRzLmRldiQ",
+        "EXPO_PUBLIC_REPL_ID": "9dbd35a4-ef5e-4ed0-94ae-93e65aa93bf5"
+      }
+    }
+  },
+  "submit": {
+    "production": {}
+  }
+}

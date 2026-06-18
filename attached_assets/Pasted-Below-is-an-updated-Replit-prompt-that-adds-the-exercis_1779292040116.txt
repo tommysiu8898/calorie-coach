@@ -1,0 +1,94 @@
+Below is an **updated Replit prompt** that adds the exercise logging feature and integrates it with your existing home page (calories burned summary, steps, “+ Add Workout” button). It also ensures data sync with Apple Health and local storage.
+
+---
+
+```text
+We have an existing React Native (Expo) app with a home page that displays:
+- Calories burned (today’s total from Apple Health + manual exercise logs)
+- Step count (from Apple Health)
+- A “+ Add Workout” button (currently placeholder)
+
+We need to implement a complete exercise logging feature and connect it to the home page.
+
+## Requirements
+
+### 1. Exercise Logging Screen (accessible from home page)
+- When user taps “+ Add Workout” on the home page, navigate to `ExerciseLogScreen`.
+- The screen must include:
+  - **Searchable exercise database** (at least 100 common exercises with MET values, both English and Traditional Chinese names).
+  - **Duration input** (minutes).
+  - **Intensity slider** (light / moderate / intense) that adjusts MET.
+  - **Real‑time calorie estimate** using MET × weight(kg) × (duration/60).
+  - **AI Estimate button**: opens a modal with text input (and optional voice button). User describes exercise; calls backend `/api/exercise/estimate` (using Kimi VL) to get exercise type, duration, calories.
+  - **Voice input** (optional but implemented) using `@react-native-voice/voice`; language follows app’s global setting.
+  - **Save button**: saves the exercise log locally and also writes to Apple Health (if user has granted write permission).
+
+### 2. Home Page Integration
+- After saving an exercise, the home page’s “Calories Burned” total must immediately reflect the newly added calories.
+- The total should be the sum of:
+  - Active Energy (from Apple Health) for today
+  - Manually logged exercise calories (stored locally)
+- Use a shared state (e.g., React Context or Zustand) that listens for updates from the exercise logger and refreshes the home page.
+- The home page already shows step count from Apple Health – keep that unchanged.
+- “+ Add Workout” button navigates to `ExerciseLogScreen`.
+
+### 3. Backend – `/api/exercise/estimate` endpoint
+- Create in existing Express server (same as `/api/chat/coach`).
+- Accept `{ description, weightKg, appLanguage }`.
+- Return JSON: `{ exerciseType, durationMinutes, caloriesBurned, met, confidence }`.
+- Use OpenRouter with `moonshotai/kimi-vl-a3b-thinking:free` (or fallback to Qwen). Prompt must enforce JSON output.
+
+### 4. Local Exercise Database
+- Create `assets/exercises.json` with at least 100 entries. Each entry:
+  - `id`
+  - `name` (English)
+  - `nameZh` (Traditional Chinese)
+  - `met` (base MET value)
+  - `category`
+- Provide a utility to load exercises based on `appLanguage`.
+
+### 5. Data Storage
+- Store manual exercise logs locally using `AsyncStorage` (or SQLite). Each log: `id`, `exerciseName`, `durationMinutes`, `calories`, `date` (ISO string), `metUsed`, `source` (manual or AI).
+- On app start, load today’s logs and sum calories with Apple Health active energy.
+- When user saves a new log, update the storage and trigger a refresh event that the home page listens to.
+
+### 6. Apple Health Integration (write)
+- Use `react-native-health` (already installed) to write a `HKWorkout` sample if user has granted write permission.
+- Map exercise name to a `HKWorkoutActivityType` (e.g., running → HKWorkoutActivityTypeRunning).
+- Set start and end dates (current time minus duration), energy burned, and metadata.
+- Do not block UI if Health write fails – just log error.
+
+### 7. UI/UX Requirements
+- Home page summary should update automatically after a new exercise is logged.
+- Provide visual feedback (toast or alert) on successful save.
+- All text must be localized using `appLanguage` (English / Traditional Chinese).
+- Voice recognition language must match `appLanguage` (e.g., `zh-CN` for Chinese, `en-US` for English).
+
+## Implementation Steps for Replit Agent
+
+1. **Backend**: Add `/api/exercise/estimate` endpoint in `server/index.js`.
+2. **Assets**: Create `exercises.json` with 100+ exercises (include MET values from standard compendium).
+3. **Frontend**:
+   - Create `screens/ExerciseLogScreen.js` with search, picker, duration, AI modal, voice, and save logic.
+   - Create a state management solution (e.g., `context/ExerciseContext.js`) to hold today’s logs and provide `addExerciseLog` function that updates both local storage and Apple Health, then notifies subscribers.
+   - Modify home page (`screens/HomeScreen.js`) to:
+     - Read today’s logs from context.
+     - Fetch active energy from Apple Health (existing).
+     - Sum total burned calories = active energy + manual logs.
+     - Navigate to `ExerciseLogScreen` when “+ Add Workout” tapped.
+4. **Navigation**: Add `ExerciseLogScreen` to the app’s stack navigator (likely in `App.js`).
+5. **Permissions**: Ensure microphone permission is requested for voice input (add to `app.json`).
+
+## Deliverables
+- Fully functional exercise logger with AI and voice (voice optional but ready to use).
+- Home page showing updated calories burned including manual logs.
+- Apple Health write integration (optional but ready).
+- All code must be ready to copy/paste into the existing Replit project.
+
+## Notes
+- The home page screenshot shows “Calories Burned 0 kcal”, “Walk 0 Steps”, “Goal: 4,000 Steps”. The step count and goal come from Apple Health; manual exercises do not affect steps.
+- The “+ Add Workout” button currently does nothing – replace with navigation.
+- Ensure that the home page refreshes automatically after returning from `ExerciseLogScreen` (e.g., using `useFocusEffect` or context updates).
+```
+
+This prompt ensures that the exercise logging feature is fully integrated with the existing home page, including calorie total aggregation, step count preservation, and a working “+ Add Workout” button. You can paste it directly into Replit’s AI Agent.

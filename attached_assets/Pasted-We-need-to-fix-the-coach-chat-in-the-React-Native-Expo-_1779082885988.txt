@@ -1,0 +1,59 @@
+We need to fix the coach chat in the React Native (Expo) + Node.js app. The UI now has **tip buttons** (e.g., "Nearby Gyms", "Nearby Restaurants", "Nearby Health Clinics") instead of relying on natural language for place search. The backend should handle explicit category requests.
+
+**Backend endpoint**: `POST /api/chat/coach`
+
+**Expected request body**:
+{
+  "message": string,          // user's typed message (could be empty if triggered by button)
+  "category": "gym" | "restaurant" | "health" | null,   // from tip button (preferred)
+  "lat": number,
+  "lng": number,
+  "appLanguage": "en" | "zh"
+}
+
+**Logic**:
+1. If `category` is provided (non-null), directly use it for Mapbox search – **skip intent detection**.
+2. If `category` is null, fall back to simple keyword detection (for backward compatibility with typed messages).
+3. Use Mapbox Search Box API category endpoint:
+   - URL: `https://api.mapbox.com/search/searchbox/v1/category/{category}`
+   - Parameters:
+     - `proximity` = `${lng},${lat}` (longitude first!)
+     - `limit` = 10
+     - `radius` = 5000
+     - `language` = "zh" if appLanguage === "zh" else "en"
+     - `access_token` = process.env.MAPBOX_ACCESS_TOKEN
+4. Map categories to Mapbox supported types:
+   - "gym" → "gym"
+   - "restaurant" → "restaurant"
+   - "health" → "health" (or "clinic" if "health" not supported; test and adjust)
+5. Return unified JSON:
+   {
+     "success": true,
+     "reply": string,   // e.g., "Here are 10 gyms near you" (localized)
+     "places": [ { name, address, distance, coordinates, mapbox_id } ]
+   }
+6. Error handling: timeout 5 seconds, friendly message if no results.
+
+**Frontend changes (React Native)**:
+- Add a row of tip buttons above the chat input:
+  - "🏋️ Nearby Gyms" (English) / "附近健身房" (Chinese)
+  - "🍽️ Nearby Restaurants" / "附近餐厅"
+  - "🏥 Nearby Health Clinics" / "附近诊所"
+- When a tip button is tapped:
+  - Get user location (expo-location) – if denied, show error.
+  - Call `/api/chat/coach` with the corresponding `category` and empty `message`.
+  - Display the returned `places` list as a scrollable list under the chat (each item shows name, distance, address, and a "View on Map" button).
+- Maintain existing iHerb supplement recommendation flow for typed messages (no category).
+
+**Environment variable**: `MAPBOX_ACCESS_TOKEN` (public token starting with `pk.`).
+
+**Testing**:
+- Tap "Nearby Gyms" button → should list gyms in Chinese if app language is Chinese.
+- Tap "Nearby Restaurants" → list restaurants.
+- No natural language parsing needed for these cases.
+
+**Implementation steps for Replit Agent**:
+1. Modify backend `/api/chat/coach` to accept and prioritize `category` field.
+2. Update frontend chat screen to add tip buttons (using AsyncStorage for language).
+3. Ensure location permission request is triggered only when needed.
+4. Deploy changes.

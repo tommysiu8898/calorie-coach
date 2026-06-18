@@ -1,0 +1,113 @@
+We need to fix both errors urgently. The Mapbox error `unknown field session_token` tells us exactly what's wrong: your backend is sending a parameter that the `/category` endpoint doesn't accept. The location permission error likely happens because the app never retries after permission is granted.
+
+Let's fix them in order.
+
+---
+
+## 🔧 Fix 1: Remove `session_token` from Mapbox API call
+
+Find your backend file (likely `server/index.js` or `api/chat/coach.js`). Look for the code that calls `https://api.mapbox.com/search/searchbox/v1/category/...`. You will see a `params` object that includes `session_token`. **Delete that line entirely**.
+
+### ❌ Wrong (causes 400 error):
+```javascript
+const params = {
+  proximity: `${lng},${lat}`,
+  limit: 10,
+  radius: 5000,
+  language: 'zh',
+  session_token: 'some-uuid',   // <-- REMOVE THIS
+  access_token: MAPBOX_TOKEN
+};
+```
+
+### ✅ Correct:
+```javascript
+const params = {
+  proximity: `${lng},${lat}`,
+  limit: 10,
+  radius: 5000,
+  language: 'zh',
+  access_token: MAPBOX_TOKEN
+};
+```
+
+After removing `session_token`, restart your backend (Replit usually auto‑restarts). Test again – the 400 error should disappear.
+
+---
+
+## 🔧 Fix 2: Location permission – force retry after grant
+
+Your frontend shows "需要位置權限" even after user allows. This means the code isn't automatically re‑fetching location after permission is granted.
+
+### Update your React Native screen (e.g., `CoachChat.js`):
+
+Replace your existing location request logic with this:
+
+```javascript
+import * as Location from 'expo-location';
+
+const requestLocationAndSearch = async (category) => {
+  // Request permission
+  let { status } = await Location.requestForegroundPermissionsAsync();
+  if (status !== 'granted') {
+    Alert.alert('需要位置權限', '請在設定中開啟位置權限');
+    return;
+  }
+  
+  // Get current location
+  let location = await Location.getCurrentPositionAsync({});
+  const { latitude, longitude } = location.coords;
+  
+  // Call your backend with category and coordinates
+  const response = await fetch('/api/chat/coach', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      message: '',
+      category: category,      // 'gym', 'restaurant', etc.
+      lat: latitude,
+      lng: longitude,
+      appLanguage: 'zh'        // or from your app settings
+    })
+  });
+  // ... handle response
+};
+```
+
+Then attach this function to each tip button:
+
+```jsx
+<TouchableOpacity onPress={() => requestLocationAndSearch('gym')}>
+  <Text>附近健身房</Text>
+</TouchableOpacity>
+```
+
+The key change: **the location fetch happens *after* permission is granted, inside the same function**.
+
+---
+
+## 🧪 Testing after fixes
+
+1. **Clear app data** or uninstall/reinstall (to reset permission state).
+2. Open the app, tap "附近健身房".
+3. System prompts "Allow location?" → tap **Allow**.
+4. The app should now fetch location and call Mapbox API without the 400 error.
+5. You should see a list of gyms in Chinese.
+
+If the 400 error persists, double‑check that your backend code no longer contains `session_token` anywhere (search the whole project for that string).
+
+---
+
+## 📝 Quick verification: Manual API test
+
+You can test your Mapbox endpoint directly in your browser or using `curl` to confirm the 400 is fixed:
+
+```
+https://api.mapbox.com/search/searchbox/v1/category/gym?proximity=114.169,22.319&limit=10&radius=5000&language=zh&access_token=YOUR_MAPBOX_PUBLIC_TOKEN
+```
+
+Replace `YOUR_MAPBOX_PUBLIC_TOKEN` with your actual token (starts with `pk.`). This should return a list of gyms near Hong Kong coordinates.
+
+Once this works, your backend will work too.
+
+Let me know if you need me to rewrite the complete backend endpoint code (without `session_token`) for you to copy‑paste into Replit.

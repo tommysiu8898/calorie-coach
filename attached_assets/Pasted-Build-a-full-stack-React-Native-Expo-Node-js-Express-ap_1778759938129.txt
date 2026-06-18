@@ -1,0 +1,49 @@
+Build a full‑stack React Native (Expo) + Node.js/Express app with the following features. Use Replit's built‑in database for user profiles and meal logs (optional), but focus on the two core features below.
+
+**Global Setup**:
+- Use Expo SDK ~52.
+- Install dependencies: expo-location, expo-router, axios, dotenv.
+- Backend: Express server running on port 3000 (Replit automatically exposes it).
+- Store all API keys in Replit Secrets: MAPBOX_ACCESS_TOKEN, IHERB_AFFILIATE_ID (optional).
+
+**Feature 1 – Nearby Gym Search (Mapbox)**:
+- Create an API endpoint `GET /api/gyms/nearby`.
+- Accept query parameters: `lat`, `lng`, `radius` (meters, default 5000), `appLanguage` ('en' or 'zh').
+- Use Mapbox Geocoding API to search for `gym` near the given coordinates.
+- Implement keyword mapping: if `appLanguage === 'zh'`, translate Chinese gym queries (e.g., "健身房" -> "gym") before constructing the Mapbox query. (The user's search text is not required here – we are just searching for gyms. But if the user types a custom query, map it similarly.)
+- Set Mapbox API language parameter to `language=zh` when `appLanguage === 'zh'` to get Chinese results.
+- Return an array of gyms with: `name`, `address`, `coordinates`, `distance` (calculated from lat/lng), `mapbox_id`.
+- Include proper error handling and timeout (5 seconds).
+
+**Feature 2 – Supplement Recommendations via Coach Chat (iHerb Affiliate)**:
+- Create an API endpoint `POST /api/chat/coach`.
+- Accept JSON body: `{ message: string, appLanguage: string }`.
+- Use a simple keyword‑matching logic (MVP) to detect supplement‑related intents (e.g., "protein", "whey", "vitamin", "omega", "creatine").
+- When detected, return a response that includes:
+  - A friendly chat reply in the user's language.
+  - A list of recommended products (hardcoded for MVP) with:
+    - `name`, `description`, `iherbProductCode`, `affiliateLink` (constructed as `https://www.iherb.com/pr/{productCode}?rcode={IHERB_AFFILIATE_ID}`)
+    - `priceNote`: "Price as shown on iHerb"
+- For non‑supplement queries, return a generic chat response (e.g., "How can I help with your fitness journey?").
+- For Chinese language (`appLanguage === 'zh'`), return responses in Traditional Chinese (suitable for Hong Kong users).
+
+**Feature 3 – Frontend Screens** (minimal but functional):
+- Screen 1: `GymFinder` – uses `expo-location` to get user location, calls `/api/gyms/nearby` with current language setting, displays list of gyms (name, address, distance).
+- Screen 2: `CoachChat` – simple chat interface. User types a message, app sends to `/api/chat/coach`. Displays assistant's reply. If supplement products are returned, show them as clickable links that open the affiliate URL.
+- Language toggle: A switch in app settings (e.g., AsyncStorage) to change `appLanguage` between `en` and `zh`. All API calls should include this setting.
+
+**Additional Requirements**:
+- Use Mapbox's Geocoding API v5 with `proximity` parameter (lat/lng) and `types=poi` to filter points of interest.
+- For Chinese keyword mapping, implement a simple dictionary: `{ "健身房": "gym", "瑜伽": "yoga studio", "游泳池": "swimming pool" }`. Only apply when `appLanguage === 'zh'`.
+- All API responses must include a `success` boolean flag.
+- Deploy the backend on Replit's built‑in web server (the Express app should listen on `process.env.PORT`).
+
+**Implementation Steps for Replit Agent**:
+1. Create a new Replit project using the "Node.js + React Native (Expo)" template.
+2. Install required npm packages: `express`, `axios`, `expo-location`, `expo-router`, `async-storage`.
+3. Create the backend folder `server/` with `index.js` containing the two endpoints and keyword mapping.
+4. Create the frontend folder `app/` with screens and navigation.
+5. Set environment variables in Replit Secrets: `MAPBOX_ACCESS_TOKEN`, `IHERB_AFFILIATE_ID` (optional).
+6. Write a `README.md` with instructions to test using Expo Go (QR code).
+
+Make sure the final code is fully functional, well‑commented, and ready to run after the user adds their Mapbox token.

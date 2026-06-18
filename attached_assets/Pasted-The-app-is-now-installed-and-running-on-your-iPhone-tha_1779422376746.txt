@@ -1,0 +1,77 @@
+The app is now installed and running on your iPhone — that’s great progress. The “Network error” you’re seeing after setting up the profile means the app’s **backend API calls are failing**, not that the app itself is crashing. This is separate from the build or HealthKit/location features.
+
+Because you’re testing on a real device, the app is trying to talk to a backend server (probably your own API or a third‑party service). Here’s how to find and fix the problem.
+
+## 🧭 Step 1: Identify which API is failing
+
+The error happens right after you enter your profile (gender, goal, activity). That likely calls an endpoint like:
+
+- `POST /api/user/profile`  
+- `POST /api/onboarding/complete`
+
+**Check your code**:  
+In your project, search for the network call that saves the profile. Run this in your terminal:
+
+```bash
+cd /home/runner/workspace/artifacts/calorie-tracker
+grep -r "fetch" app/ | grep -i "profile\|save"
+```
+
+Or look inside `app/onboarding` or `app/profile` for `axios` or `fetch` calls.
+
+## 📡 Step 2: Verify the API base URL
+
+The app likely uses an environment variable for the API endpoint, such as:
+
+- `EXPO_PUBLIC_API_URL`  
+- `API_BASE_URL`
+
+Check whether that variable is **set correctly for the production build** (the iOS app).  
+You set `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY` earlier, but you may also need to add the backend URL.
+
+### Add the API URL to EAS environment variables
+
+```bash
+eas env:create --name EXPO_PUBLIC_API_URL --value "https://your-backend.com/api" --environment production --visibility plaintext
+```
+
+Replace `https://your-backend.com/api` with your actual backend URL (if you’re using a local server during development, the iOS app cannot reach `localhost` – you need a public URL like a deployed backend on Render, Heroku, or your own VPS).
+
+## 🌐 Step 3: Test the API from your iPhone independently
+
+Open Safari on your iPhone and try to visit the API endpoint directly, for example:
+
+```
+https://your-backend.com/api/health
+```
+
+If you get a CORS error or a timeout, the backend is not accessible from the device. Make sure:
+
+- The backend is deployed to a public URL (not `localhost` or `127.0.0.1`).
+- If you’re using a cloud backend (e.g., Supabase, Firebase), the URL is correct.
+- If you’re using Clerk for auth, the backend might require a valid session token – the error might be because Clerk isn’t fully initialized.
+
+## 🔐 Step 4: Check if Clerk authentication is working
+
+In the same screenshot, you don’t see any login screen – you go straight to profile setup. That suggests the app might already have a user session (or it’s not requiring auth yet).
+
+To verify Clerk is working on the device:
+
+- Look for any Clerk‑related logs. You can use **Safari Web Inspector** (connect iPhone to Mac, open Safari → Develop → [Your iPhone] → [Your app]) to see console logs.
+- If Clerk fails to load because the publishable key is missing or invalid, the API call might be made without a valid token, causing a network error.
+
+## 🛠️ Step 5: Quick workaround – test with a public API mock
+
+If your backend is not yet deployed, you can temporarily hardcode a mock response in your code to bypass the network call. That would let you test the rest of the app (HealthKit, location) while you fix the backend.
+
+## ✅ Summary of actions
+
+1. **Find the exact API call** in your code (search for `fetch` or `axios` in the onboarding flow).
+2. **Check the API base URL** – does it use an environment variable? If so, add it via `eas env:create`.
+3. **Ensure your backend is reachable from the internet** (not `localhost`).
+4. **Test the API manually** from your iPhone’s browser.
+5. **Consider temporarily mocking** the call to continue testing HealthKit/location.
+
+Once the API is reachable, the profile will save and you can proceed to test the native features.
+
+Would you like help finding the specific network call in your code? I can guide you through `grep` commands to locate it.

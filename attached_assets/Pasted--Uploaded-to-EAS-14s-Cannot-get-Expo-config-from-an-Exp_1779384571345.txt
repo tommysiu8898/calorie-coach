@@ -1,0 +1,20 @@
+✔ Uploaded to EAS 14s
+Cannot get Expo config from an Expo project - node /home/runner/workspace/node_modules/.pnpm/@expo+fingerprint@0.15.5/node_modules/@expo/fingerprint/build/ExpoConfigLoader.js /home/runner/workspace/artifacts/calorie-tracker /tmp/expo-fingerprint-DWQ6DX/.fingerprintignore exited with non-zero code: 1:  Error: node /home/runner/workspace/node_modules/.pnpm/@expo+fingerprint@0.15.5/node_modules/@expo/fingerprint/build/ExpoConfigLoader.js /home/runner/workspace/artifacts/calorie-tracker /tmp/expo-fingerprint-DWQ6DX/.fingerprintignore exited with non-zero code: 1
+    at ChildProcess.completionListener (/home/runner/workspace/node_modules/.pnpm/@expo+spawn-async@1.7.2/node_modules/@expo/spawn-async/build/spawnAsync.js:42:23)
+    at Object.onceWrapper (node:events:623:26)
+    at ChildProcess.emit (node:events:508:28)
+    at ChildProcess.emit (node:domain:489:12)
+    at maybeClose (node:internal/child_process:1101:16)
+    at ChildProcess._handle.onexit (node:internal/child_process:305:5)
+    ...
+    at spawnAsync (/home/runner/workspace/node_modules/.pnpm/@expo+spawn-async@1.7.2/node_modules/@expo/spawn-async/build/spawnAsync.js:7:23)
+    at spawnWithIpcAsync (/home/runner/workspace/node_modules/.pnpm/@expo+fingerprint@0.15.5/node_modules/@expo/fingerprint/build/utils/SpawnIPC.js:13:47)
+    at getExpoConfigAsync (/home/runner/workspace/node_modules/.pnpm/@expo+fingerprint@0.15.5/node_modules/@expo/fingerprint/build/ExpoConfig.js:27:68)
+    at async getHashSourcesAsync (/home/runner/workspace/node_modules/.pnpm/@expo+fingerprint@0.15.5/node_modules/@expo/fingerprint/build/sourcer/Sourcer.js:18:51)
+    at async Object.createFingerprintAsync (/home/runner/workspace/node_modules/.pnpm/@expo+fingerprint@0.15.5/node_modules/@expo/fingerprint/build/Fingerprint.js:22:21)
+    at async withTemporaryEnvAsync (/home/runner/workspace/.config/npm/node_global/lib/node_modules/eas-cli/build/fingerprint/cli.js:79:16)
+    at async createFingerprintWithoutLoggingAsync (/home/runner/workspace/.config/npm/node_global/lib/node_modules/eas-cli/build/fingerprint/cli.js:73:12)
+    at async createFingerprintAsync (/home/runner/workspace/.config/npm/node_global/lib/node_modules/eas-cli/build/fingerprint/cli.js:37:29)
+    at async computeAndMaybeUploadFingerprintWithoutExpoUpdatesAsync (/home/runner/workspace/.config/npm/node_global/lib/node_modules/eas-cli/build/build/build.js:509:25)
+    at async computeAndMaybeUploadRuntimeAndFingerprintMetadataAsync (/home/runner/workspace/.config/npm/node_global/lib/node_modules/eas-cli/build/build/build.js:461:29)
+✔ Computed project fingerprint

@@ -1,0 +1,96 @@
+Part 1: System Overview & Principles
+This application is a CAL-AI-style food nutrition tracker. The primary goal is to ensure the accuracy of AI-driven food recognition and calorie estimation.
+
+Core Design Principle: The architecture must prioritize a well-structured backend and a tightly controlled AI pipeline over any user-interface elements.
+
+The Critical AI Model: The primary model is Kimi VL (moonshot/kimi-vl-2.5) accessed via the Replit AI Integrations with OpenRouter tool. Kimi's Mixture-of-Experts architecture makes it the best choice for a solo developer to achieve high accuracy with global dishes. Replit AI Integrations provides instant, zero-configuration access to this model, with billing handled directly by Replit.
+
+The Accuracy Strategy: The primary method for ensuring accuracy is precise prompt engineering and enforcing a strict JSON Schema. The AI pipeline will not be functional without a robust schema.
+
+Part 2: Detailed Technical Architecture
+1. Data Layer (Replit Native Database)
+
+Database: Use Replit's built-in PostgreSQL database. The Replit Agent can set this up for you .
+
+Schema Creation: The Agent must generate the SQL schema for the following table and all related security rules:
+
+Table: meal_entries
+
+id (uuid, primary key)
+
+user_id (uuid, foreign key referencing profiles(id) from Supabase Auth)
+
+photo_url (text)
+
+ai_response (jsonb, stores the full, unmodified output from Kimi VL)
+
+user_corrections (jsonb, nullable)
+
+total_calories (integer)
+
+meal_type (text, e.g., 'breakfast', 'lunch', 'dinner', 'snack')
+
+created_at (timestamp)
+
+2. AI Model Integration (Kimi VL via Replit AI Integrations)
+
+Model Endpoint: The backend will call the Kimi VL model via the Replit AI Integrations tool. The Agent will implement the Replit-native AI Integrations service to connect to OpenRouter.
+
+Prompt Engineering (Critical for Accuracy): The system prompt must be meticulously designed. It must adhere to the following guidelines:
+
+It must be explicit, instructing the model to act as a professional nutritionist.
+
+It must include the exact JSON schema structure to follow.
+
+It must specify the output format "ONLY valid JSON" without any additional text or markdown formatting.
+
+It must include specific rules for portion estimation (e.g., "Estimate portion size using known reference objects (coin, hand) in the image"), handling ambiguous images, and confidence scoring.
+
+JSON Schema: This is the most critical piece. The Agent must strictly enforce this exact output format in the prompt:
+
+json
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "meal_name": { "type": "string" },
+    "ingredients": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "portion_grams": { "type": "number" },
+          "calories": { "type": "number" },
+          "protein_g": { "type": "number" },
+          "carbs_g": { "type": "number" },
+          "fat_g": { "type": "number" }
+        },
+        "required": ["name", "portion_grams", "calories", "protein_g", "carbs_g", "fat_g"]
+      }
+    },
+    "total_calories": { "type": "number" },
+    "total_protein_g": { "type": "number" },
+    "total_carbs_g": { "type": "number" },
+    "total_fat_g": { "type": "number" },
+    "confidence_score": { "type": "number", "minimum": 0, "maximum": 1 }
+  },
+  "required": ["meal_name", "ingredients", "total_calories", "total_protein_g", "total_carbs_g", "total_fat_g", "confidence_score"]
+}
+3. Backend Functionality & Logic
+
+Edge Function: The backend will contain one primary Express.js serverless function: analyze-food. This function is responsible for calling the Kimi VL model with the provided schema and instructions and returning the structured JSON.
+
+App Storage Integration: The app must use Replit’s App Storage for storing user-uploaded images. Upon upload, generate a public URL for the image to be stored in the meal_entries table.
+
+4. The Core Feature Workflow (Built-in Test)
+
+Capture: The minimal test interface (TestAI.js) will have a button to select an image from the device's library.
+
+Upload: The selected image is uploaded to the "meal-photos" bucket in Replit App Storage, and a public URL is obtained.
+
+Analyze: The app sends the imageBase64 string to the analyze-food serverless function.
+
+Receive & Display: The function returns the structured JSON response. The test screen will display this raw JSON in a scrollable text area for debugging.
+
+Save: A "Log Meal" button will save the analysis results (the JSON and the photo URL) to the meal_entries table in the Replit PostgreSQL database, automatically setting a meal_type based on the time of day.

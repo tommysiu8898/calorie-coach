@@ -1,0 +1,69 @@
+diff --git a/src/modules/HMRClient.js b/src/modules/HMRClient.js
+index 3e2652d7a43ff0d2ab3ad7556ecf79f88f7a6edb..c94ae71621e3363b5771373d3e71a968e65910b6 100644
+--- a/src/modules/HMRClient.js
++++ b/src/modules/HMRClient.js
+@@ -1,6 +1,12 @@
+ "use strict";
+ 
+ const EventEmitter = require("./vendor/eventemitter3");
++
++// Replit proxy closes idle WebSocket connections after ~3 seconds.
++// Metro's built-in heartbeat was added in 0.83.7 at 20s — too slow.
++// This patch adds a 2-second heartbeat so the connection stays alive.
++const HEARTBEAT_INTERVAL_MS = 2_000;
++
+ const inject = ({ module: [id, code], sourceURL }) => {
+   if (global.globalEvalWithSourceUrl) {
+     global.globalEvalWithSourceUrl(code, sourceURL);
+@@ -17,11 +23,13 @@ class HMRClient extends EventEmitter {
+   _pendingUpdate = null;
+   _queue = [];
+   _state = "opening";
++  _heartbeatTimer = null;
+   constructor(url) {
+     super();
+     this._ws = new global.WebSocket(url);
+     this._ws.onopen = () => {
+       this._state = "open";
++      this._startHeartbeat();
+       this.emit("open");
+       this._flushQueue();
+     };
+@@ -30,11 +38,14 @@ class HMRClient extends EventEmitter {
+     };
+     this._ws.onclose = (closeEvent) => {
+       this._state = "closed";
++      this._stopHeartbeat();
+       this.emit("close", closeEvent);
+     };
+     this._ws.onmessage = (message) => {
+       const data = JSON.parse(String(message.data));
+       switch (data.type) {
++        case "heartbeat":
++          break;
+         case "bundle-registered":
+           this.emit("bundle-registered");
+           break;
+@@ -88,6 +99,22 @@ class HMRClient extends EventEmitter {
+     this._queue.forEach((message) => this.send(message));
+     this._queue.length = 0;
+   }
++  _startHeartbeat() {
++    this._stopHeartbeat();
++    this._heartbeatTimer = setInterval(() => {
++      if (this._state === "open") {
++        try {
++          this._ws.send('{"type":"heartbeat"}');
++        } catch (_) {}
++      }
++    }, HEARTBEAT_INTERVAL_MS);
++  }
++  _stopHeartbeat() {
++    if (this._heartbeatTimer != null) {
++      clearInterval(this._heartbeatTimer);
++      this._heartbeatTimer = null;
++    }
++  }
+   enable() {
+     this._isEnabled = true;
+     const update = this._pendingUpdate;

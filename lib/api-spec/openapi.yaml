@@ -1,0 +1,644 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: API specification
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: meals
+    description: Meal tracking operations
+  - name: profile
+    description: User profile operations
+  - name: ai
+    description: AI analysis operations
+  - name: storage
+    description: File storage operations
+  - name: notifications
+    description: Push notification operations
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      description: Returns server health status
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  /analyze-food:
+    post:
+      operationId: analyzeFood
+      tags: [ai]
+      summary: Analyze food image with AI (nutrition only — upload photo separately)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AnalyzeFoodRequest"
+      responses:
+        "200":
+          description: AI nutrition analysis result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NutritionAnalysis"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: AI analysis failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /meals:
+    post:
+      operationId: createMeal
+      tags: [meals]
+      summary: Save a meal entry
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateMealRequest"
+      responses:
+        "201":
+          description: Meal saved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MealEntry"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /meals/today:
+    get:
+      operationId: getTodayMeals
+      tags: [meals]
+      summary: Get today's meal entries
+      parameters:
+        - name: userId
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Today's meals
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TodayMealsResponse"
+
+  /meals/history:
+    get:
+      operationId: getMealHistory
+      tags: [meals]
+      summary: Get meal history (past days)
+      parameters:
+        - name: userId
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: Meal history
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MealEntry"
+
+  /profile:
+    get:
+      operationId: getProfile
+      tags: [profile]
+      summary: Get user profile
+      parameters:
+        - name: userId
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+        "404":
+          description: Profile not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    put:
+      operationId: updateProfile
+      tags: [profile]
+      summary: Create or update user profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateProfileRequest"
+      responses:
+        "200":
+          description: Updated profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+
+  /push-token:
+    post:
+      operationId: registerPushToken
+      tags: [notifications]
+      summary: Register or update an Expo push token for a user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterPushTokenRequest"
+      responses:
+        "200":
+          description: Token registered
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /notifications/streak-check:
+    post:
+      operationId: checkStreakNudge
+      tags: [notifications]
+      summary: Check if a streak nudge should be sent for the user today
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StreakCheckRequest"
+      responses:
+        "200":
+          description: Streak nudge check result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StreakCheckResponse"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /storage/upload-url:
+    post:
+      operationId: getUploadUrl
+      tags: [storage]
+      summary: |
+        Get a presigned GCS PUT URL for direct meal photo upload.
+        Step 1 of 2: call this to obtain uploadUrl and objectKey.
+        Step 2 of 2: PUT the image bytes directly to uploadUrl (Content-Type: image/jpeg).
+        Photo upload is independent of food analysis — run both in parallel.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UploadUrlRequest"
+      responses:
+        "200":
+          description: Presigned upload URL
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UploadUrlResponse"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "503":
+          description: Storage unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /storage/objects/{objectKey}:
+    get:
+      operationId: getStorageObject
+      tags: [storage]
+      summary: Serve a stored meal photo by its object key
+      parameters:
+        - name: objectKey
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The objectKey returned by getUploadUrl (e.g. meal-photos/userId/uuid.jpg)
+      responses:
+        "200":
+          description: Image bytes
+          content:
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+        "404":
+          description: Object not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error
+
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+      required:
+        - success
+
+    RegisterPushTokenRequest:
+      type: object
+      properties:
+        userId:
+          type: string
+        token:
+          type: string
+      required:
+        - userId
+        - token
+
+    StreakCheckRequest:
+      type: object
+      properties:
+        userId:
+          type: string
+        localDate:
+          type: string
+          description: Current local date in YYYY-MM-DD format
+      required:
+        - userId
+        - localDate
+
+    StreakCheckResponse:
+      type: object
+      properties:
+        shouldNudge:
+          type: boolean
+        streakDays:
+          type: integer
+      required:
+        - shouldNudge
+        - streakDays
+
+    AnalyzeFoodRequest:
+      type: object
+      properties:
+        imageBase64:
+          type: string
+          description: Base64-encoded image data (≤512×512 JPEG recommended)
+        userId:
+          type: string
+          description: User UUID v4
+      required:
+        - imageBase64
+        - userId
+
+    NutritionIngredient:
+      type: object
+      properties:
+        name:
+          type: string
+        portionGrams:
+          type: number
+        calories:
+          type: number
+        proteinG:
+          type: number
+        carbsG:
+          type: number
+        fatG:
+          type: number
+      required:
+        - name
+        - portionGrams
+        - calories
+        - proteinG
+        - carbsG
+        - fatG
+
+    NutritionAnalysis:
+      type: object
+      description: |
+        AI nutrition analysis result. Does not include photoUrl — photo upload
+        is handled separately via /storage/upload-url.
+      properties:
+        mealName:
+          type: string
+        ingredients:
+          type: array
+          items:
+            $ref: "#/components/schemas/NutritionIngredient"
+        totalCalories:
+          type: number
+        totalProteinG:
+          type: number
+        totalCarbsG:
+          type: number
+        totalFatG:
+          type: number
+        confidenceScore:
+          type: number
+      required:
+        - mealName
+        - ingredients
+        - totalCalories
+        - totalProteinG
+        - totalCarbsG
+        - totalFatG
+        - confidenceScore
+
+    CreateMealRequest:
+      type: object
+      properties:
+        userId:
+          type: string
+          description: User UUID v4
+        photoUrl:
+          type: string
+          nullable: true
+          description: publicUrl from the upload-url response, or null if no photo
+        aiResponse:
+          type: object
+          nullable: true
+          description: Raw AI analysis payload for audit purposes
+        userCorrections:
+          type: object
+          nullable: true
+          description: User-edited ingredient portions (if any)
+        totalCalories:
+          type: integer
+        totalProteinG:
+          type: number
+        totalCarbsG:
+          type: number
+        totalFatG:
+          type: number
+        mealName:
+          type: string
+        localHour:
+          type: integer
+          minimum: 0
+          maximum: 23
+          description: |
+            Client's current local hour (0–23). Used to assign mealType in user's timezone.
+            Falls back to server UTC hour if omitted.
+      required:
+        - userId
+        - totalCalories
+        - totalProteinG
+        - totalCarbsG
+        - totalFatG
+        - mealName
+
+    MealEntry:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        photoUrl:
+          type: string
+          nullable: true
+        aiResponse:
+          type: object
+          nullable: true
+        userCorrections:
+          type: object
+          nullable: true
+        totalCalories:
+          type: integer
+        totalProteinG:
+          type: number
+        totalCarbsG:
+          type: number
+        totalFatG:
+          type: number
+        mealName:
+          type: string
+        mealType:
+          type: string
+          enum: [breakfast, lunch, dinner, snack]
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - userId
+        - totalCalories
+        - totalProteinG
+        - totalCarbsG
+        - totalFatG
+        - mealName
+        - mealType
+        - createdAt
+
+    TodayMealsResponse:
+      type: object
+      properties:
+        meals:
+          type: array
+          items:
+            $ref: "#/components/schemas/MealEntry"
+        totalCalories:
+          type: integer
+        totalProteinG:
+          type: number
+        totalCarbsG:
+          type: number
+        totalFatG:
+          type: number
+        streak:
+          type: integer
+      required:
+        - meals
+        - totalCalories
+        - totalProteinG
+        - totalCarbsG
+        - totalFatG
+        - streak
+
+    UserProfile:
+      type: object
+      properties:
+        userId:
+          type: string
+        gender:
+          type: string
+        birthday:
+          type: string
+        heightCm:
+          type: number
+        weightKg:
+          type: number
+        targetWeightKg:
+          type: number
+        goal:
+          type: string
+        activityLevel:
+          type: string
+        dailyCalorieTarget:
+          type: integer
+        dailyProteinTarget:
+          type: number
+        dailyCarbsTarget:
+          type: number
+        dailyFatTarget:
+          type: number
+      required:
+        - userId
+        - gender
+        - birthday
+        - heightCm
+        - weightKg
+        - targetWeightKg
+        - goal
+        - activityLevel
+        - dailyCalorieTarget
+        - dailyProteinTarget
+        - dailyCarbsTarget
+        - dailyFatTarget
+
+    UpdateProfileRequest:
+      type: object
+      properties:
+        userId:
+          type: string
+        gender:
+          type: string
+        birthday:
+          type: string
+        heightCm:
+          type: number
+        weightKg:
+          type: number
+        targetWeightKg:
+          type: number
+        goal:
+          type: string
+        activityLevel:
+          type: string
+      required:
+        - userId
+        - gender
+        - birthday
+        - heightCm
+        - weightKg
+        - targetWeightKg
+        - goal
+        - activityLevel
+
+    UploadUrlRequest:
+      type: object
+      description: Request a presigned GCS PUT URL for direct photo upload
+      properties:
+        userId:
+          type: string
+          description: User UUID v4 (key is scoped to this user)
+        fileName:
+          type: string
+          description: Original file name (used for logging only)
+        contentType:
+          type: string
+          description: MIME type of the image (e.g. image/jpeg)
+      required:
+        - userId
+        - fileName
+        - contentType
+
+    UploadUrlResponse:
+      type: object
+      description: |
+        Presigned GCS upload URL. PUT image bytes directly to uploadUrl
+        with Content-Type matching the requested contentType.
+      properties:
+        uploadUrl:
+          type: string
+          description: Presigned GCS PUT URL — upload image bytes directly here (15 min TTL)
+        objectKey:
+          type: string
+          description: Storage key for the uploaded object (save this for the meal entry)
+        publicUrl:
+          type: string
+          description: API serving URL for the photo after upload completes
+      required:
+        - uploadUrl
+        - objectKey
+        - publicUrl

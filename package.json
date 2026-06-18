@@ -1,0 +1,27 @@
+{
+  "name": "workspace",
+  "version": "0.0.0",
+  "license": "MIT",
+  "scripts": {
+
+    "build": "pnpm run typecheck && pnpm -r --if-present run build",
+    "typecheck:libs": "tsc --build",
+    "typecheck": "pnpm run typecheck:libs && pnpm -r --filter \"./artifacts/**\" --filter \"./scripts\" --if-present run typecheck"
+  },
+  "packageManager": "pnpm@10.26.1",
+  "private": true,
+  "devDependencies": {
+    "prettier": "^3.8.1",
+    "typescript": "~5.9.2"
+  },
+  "dependencies": {
+    "@replit/connectors-sdk": "^0.4.1",
+    "@replit/revenuecat-sdk": "^4.2.0"
+  },
+  "pnpm": {
+    "patchedDependencies": {
+      "metro-runtime@0.83.3": "patches/metro-runtime@0.83.3.patch",
+      "expo-server@1.0.6": "patches/expo-server@1.0.6.patch"
+    }
+  }
+}

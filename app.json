@@ -1,0 +1,49 @@
+{
+  "expo": {
+    "name": "Calories Coach",
+    "slug": "calorie-tracker",
+    "version": "1.0.0",
+    "platforms": [
+      "ios",
+      "android"
+    ],
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.caloriescoach.app",
+      "entitlements": {
+        "com.apple.developer.healthkit": true,
+        "com.apple.developer.healthkit.access": []
+      },
+      "infoPlist": {
+        "NSCameraUsageDescription": "Used to take photos of your meals for AI-powered calorie tracking.",
+        "NSPhotoLibraryUsageDescription": "Used to select food photos from your library for calorie tracking.",
+        "NSLocationWhenInUseUsageDescription": "Calories Coach uses your location to find nearby gyms, restaurants, and parks.",
+        "NSHealthShareUsageDescription": "Calories Coach reads your steps, active calories, and workouts from Apple Health to show your full energy balance.",
+        "NSHealthUpdateUsageDescription": "Calories Coach reads health data to calculate your net calorie balance.",
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "package": "com.caloriescoach.app",
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.RECORD_AUDIO"
+      ]
+    },
+    "extra": {
+      "eas": {
+        "projectId": "1aaeeb63-ca95-49ab-85ec-9afc68de122b"
+      }
+    },
+    "owner": "ktmcheung9",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/1aaeeb63-ca95-49ab-85ec-9afc68de122b"
+    }
+  }
+}

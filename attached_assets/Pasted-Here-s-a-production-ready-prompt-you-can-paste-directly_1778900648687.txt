@@ -1,0 +1,151 @@
+Here's a production‑ready prompt you can paste directly into Replit's AI Agent to add Apple Health integration to your existing calorie tracking app.
+
+Based on our research, the recommended library is @kingstinct/react-native-healthkit which offers full TypeScript support and Promise‑based APIs, with the alternative @kayzmann/expo-healthkit providing zero‑native‑config setup. Both require Expo development builds (Expo Go will not work).
+
+---
+
+```text
+We need to add Apple HealthKit integration to an existing React Native (Expo) calorie tracking app. The existing app already has: meal logging (photo + AI analysis), gym search (Mapbox), and coach chat.
+
+**Tech Stack Addition**: @kingstinct/react-native-healthkit (or @kayzmann/expo-healthkit) + expo-dev-client (since HealthKit requires native modules, Expo Go won't work).
+
+**Goal**: Display calories burned from Apple Health, calculate net calories (intake - burned), and show historical trends.
+
+## Part 1: HealthKit Setup & Permissions
+
+1. Install HealthKit library and dev client:
+   ```bash
+   npx expo install expo-dev-client
+   yarn add @kingstinct/react-native-healthkit
+```
+
+2. Update app.json with the config plugin:
+   ```json
+   {
+     "expo": {
+       "plugins": [
+         "@kingstinct/react-native-healthkit",
+         ["expo-build-properties", { "ios": { "deploymentTarget": "13.4" } }]
+       ],
+       "ios": {
+         "infoPlist": {
+           "NSHealthShareUsageDescription": "Read your activity data to show calories burned and calculate net energy balance",
+           "NSHealthUpdateUsageDescription": "Save your meals as nutrition samples to HealthKit"
+         }
+       }
+     }
+   }
+   ```
+3. Create a custom React hook src/hooks/useHealthKit.ts:
+   · Initialize HealthKit on mount, request permissions for activeEnergyBurned and basalEnergyBurned.
+   · Fetch today's active energy (calories burned from movement) and basal energy (resting calories).
+   · Fetch weekly active energy for charts.
+   · Cache fetched data locally with timestamps to avoid excessive HealthKit queries.
+   · Handle errors (permission denied, HealthKit unavailable on device).
+4. After authorization, schedule a background observer (optional) to listen for new data samples using subscribeToObservers to keep the app in sync.
+
+Part 2: Health Data Tab (New Bottom Tab)
+
+Add a new tab called "Health" (icon: heartbeat or activity). The tab should show:
+
+1. Today's Activity Summary (cards):
+   · Active Energy (kcal) – from HealthKit
+   · Basal Energy (kcal) – from HealthKit
+   · Total Energy Burned (active + basal)
+2. Weekly Activity Chart:
+   · Bar chart showing active energy for each of the last 7 days.
+   · Use react-native-svg and react-native-svg-charts for simple, fast chart rendering.
+3. Recent Workouts (optional MVP):
+   · List of recent workouts from HealthKit (type, duration, calories).
+   · Use getWorkouts method from HealthKit library.
+
+Part 3: Home Dashboard Update – Net Calories Section
+
+Add a new section on the existing home dashboard (below the meal timeline) that displays:
+
+```
+┌─────────────────────────────────┐
+│  🔥 NET CALORIES                │
+│                                 │
+│  Food Intake:    2,150 kcal     │
+│  Active Burned:  - 450 kcal     │
+│  Resting Burned: -1,600 kcal    │
+│  ─────────────────────────────  │
+│  NET:                100 kcal   │
+│                                 │
+│  Status: ▲ 100 cal surplus      │
+└─────────────────────────────────┘
+```
+
+· Food intake comes from the existing meal entries database (sum of total_calories for today).
+· Active and resting burned come from HealthKit (via useHealthKit hook).
+· Status message: "surplus" if net > 0, "deficit" if net < 0, "maintenance" if net ≈ 0.
+
+Part 4: Database Schema Update
+
+Add calories_burned table to store historical burned data for charts and future analytics (avoid repeated HealthKit queries):
+
+```sql
+CREATE TABLE calories_burned (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES users(id),
+  date DATE NOT NULL,
+  active_energy INTEGER NOT NULL,
+  basal_energy INTEGER NOT NULL,
+  total_energy INTEGER NOT NULL,
+  created_at TIMESTAMP DEFAULT NOW(),
+  UNIQUE(user_id, date)
+);
+```
+
+Part 5: Implementation Steps
+
+1. First, run npx expo prebuild --clean to regenerate native iOS project with HealthKit entitlements.
+2. Build and run npx expo run:ios (requires physical iOS device; simulator works but won't have real Health data).
+3. Implement useHealthKit hook as described.
+4. Add "Health" tab to bottom navigation (update _layout.tsx).
+5. Update home dashboard with net calories section.
+6. Test on a device with Apple Health data.
+
+Note: HealthKit is iOS‑only. For Android, you would need react-native-health-connect separately – we will add later if needed.
+
+Important: Do NOT break existing features (meal logging, gym search, coach chat). Keep all existing code intact. Only add new components and hooks.
+
+Output: Provide complete code for:
+
+· src/hooks/useHealthKit.ts
+· src/screens/HealthTab.tsx
+· Updated home dashboard (net calories section)
+· Updated app.json with HealthKit plugin
+· Database migration script
+
+```
+
+---
+
+### What This Prompt Does
+
+| Feature | Description |
+|:---|:---|
+| **HealthKit Integration** | Fetches active and basal energy burned from Apple Health. |
+| **Health Data Tab** | Displays daily totals, weekly chart, and recent workouts. |
+| **Home Dashboard Update** | Shows net calories (intake - burned) with status indicator. |
+| **Database Cache** | Stores historical burned data for fast chart loading. |
+| **Background Sync** | Optional observer to keep burned data current without user action. |
+
+### How to Use It
+
+1. **Copy the entire prompt** above.
+2. **Open Replit** and select your existing project.
+3. **Paste the prompt** into the Replit AI Agent chat (or Agent panel).
+4. The Agent will generate all necessary files, update dependencies, and modify existing screens.
+5. After generation, run `npx expo prebuild --clean` and then `npx expo run:ios` on a physical iOS device.
+
+### Important Notes
+
+- ⚠️ **Expo Go won't work**. You need a **development build** (the Agent will help set this up).
+- ⚠️ **Testing requires a physical iOS device** with Health app and real data (simulator has no Health data).
+- ✅ **Existing features remain unchanged** – only new components are added.
+
+Want me to adjust the prompt for your preferred library (`@kayzmann/expo-healthkit` for zero‑native‑config), or add Android Health Connect support as a future phase?
+```

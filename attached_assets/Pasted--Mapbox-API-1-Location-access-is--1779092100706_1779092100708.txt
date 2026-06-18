@@ -1,0 +1,90 @@
+看到了，这两个错误其实很常见，一个和前端的位置权限请求有关，另一个是后端调用Mapbox API时参数用错了。我们一步一步来修复它们。
+
+### 🐞 错误1：“Location access is needed”
+
+这个问题通常不是用户没给权限，而是**App没有在用户允许权限后，去重新获取位置**。
+
+你可以试一下这两个修复方法：
+*   **请求成功后调用位置获取函数**：不要在用户允许权限后就结束，而是立刻调用一个 `getLocation()` 函数来主动获取位置。
+*   **增加一个备选方案**：为了防止 `expo-location` 在某些环境下不稳定，可以使用浏览器默认的 `navigator.geolocation` API 作为备选，以提高兼容性。
+
+### 🐞 错误2：“unknown field `session_token`”
+
+这个400错误的原因找到了，是代码向 **`/category` 端点传递了 `session_token` 参数，但这个参数压根不属于它**。`session_token` 只用在两步交互式搜索 (`/suggest` 和 `/retrieve`) 来计费，而 `/category` 是一次性查询，不支持这个字段。
+
+请检查后端调用代码，务必**删除 `session_token` 参数**。
+
+### 🛠️ 修复后的代码示例
+
+我为你准备了修改好的前后端代码片段，可以直接拿去用。
+
+#### 1. 修复后的前端位置请求逻辑
+```typescript
+// 修复后的前端位置请求函数
+const requestLocationPermission = async () => {
+  let { status } = await Location.requestForegroundPermissionsAsync();
+  if (status !== 'granted') {
+    // 如果权限被拒绝，可以再尝试用浏览器定位作为备用
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setUserLocation(position.coords);
+        },
+        (error) => console.log('备用定位失败: ', error)
+      );
+    }
+    return;
+  }
+  // 关键修复：权限获得后，立刻主动获取一次位置
+  let location = await Location.getCurrentPositionAsync({});
+  setUserLocation(location.coords);
+};
+```
+
+#### 2. 修复后的后端 `/api/chat/coach` 调用示例
+```python
+# 修复后的后端调用示例 (Python)
+import requests
+
+# 当用户点击 "附近健身房" 按钮时，调用 /category 端点
+def search_nearby_gyms(lat, lng, app_language):
+    url = "https://api.mapbox.com/search/searchbox/v1/category/gym"
+    params = {
+        "proximity": f"{lng},{lat}", # 注意经度在前
+        "limit": 10,
+        "radius": 5000,
+        "language": "zh" if app_language == 'zh' else "en",
+        # 再次强调，千万不能加 session_token 参数！
+        "access_token": "你的_mapbox_公钥"
+    }
+    
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        return parse_results(response.json())
+    else:
+        print(f"请求出错: {response.status_code}")
+        return []
+
+def parse_results(data):
+    """解析返回的JSON数据，提取需要的信息"""
+    places = []
+    for feature in data.get('features', []):
+        places.append({
+            'name': feature['properties']['name'],
+            'address': feature['properties'].get('address', '地址未知'),
+            'coordinates': feature['geometry']['coordinates']
+        })
+    return places
+```
+
+### 📋 部署核对清单
+
+建议你按这个步骤来重新部署和测试，确保万无一失：
+1.  **更新后端代码**：删除 `session_token` 参数。
+2.  **更新前端代码**：按上述代码优化位置请求逻辑。
+3.  **重启服务器**：让所有改动生效。
+4.  **完整测试一下**：
+    *   **首次使用**：清除App数据后开启。系统提示权限时，选择“允许”。之后功能应正常工作。
+    *   **再次使用**：如果之前允许过权限，这次应该能直接获取位置，无需再次询问。
+
+按照这几点来调整，功能应该就能恢复了。如果在测试中还遇到了其他报错，可以随时把新的错误提示发给我看看。

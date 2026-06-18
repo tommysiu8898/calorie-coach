@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Partner Admin</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: system-ui, -apple-system, sans-serif; background: #f1f5f9; color: #0f172a; min-height: 100vh; }
+    header { background: #0f172a; color: #fff; padding: 16px 24px; display: flex; align-items: center; gap: 12px; }
+    header h1 { font-size: 18px; font-weight: 600; }
+    header span { font-size: 12px; background: #22c55e20; color: #22c55e; border: 1px solid #22c55e40; border-radius: 4px; padding: 2px 8px; }
+    .container { max-width: 980px; margin: 32px auto; padding: 0 16px; }
+    #login-panel { background: #fff; border-radius: 12px; padding: 32px; box-shadow: 0 1px 3px rgba(0,0,0,.1); max-width: 400px; margin: 80px auto; }
+    #login-panel h2 { font-size: 20px; font-weight: 600; margin-bottom: 8px; }
+    #login-panel p { font-size: 14px; color: #64748b; margin-bottom: 20px; }
+    input[type="password"], input[type="text"], input[type="number"], input[type="date"], select, textarea {
+      width: 100%; padding: 9px 12px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 14px;
+      outline: none; transition: border .15s; font-family: inherit; background: #fff; color: #0f172a;
+    }
+    input:focus, select:focus, textarea:focus { border-color: #6366f1; }
+    textarea { resize: vertical; min-height: 70px; }
+    button { cursor: pointer; border: none; border-radius: 8px; font-size: 14px; font-weight: 500; padding: 10px 20px; transition: opacity .15s; }
+    button:hover { opacity: .85; }
+    #login-btn { background: #0f172a; color: #fff; width: 100%; margin-top: 12px; }
+    #error-msg { font-size: 13px; color: #ef4444; margin-top: 8px; display: none; }
+    #main-panel { display: none; }
+    .card { background: #fff; border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,.1); margin-bottom: 24px; }
+    .card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+    .card-header h2 { font-size: 16px; font-weight: 600; }
+    .badge-count { font-size: 12px; background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 20px; padding: 2px 10px; color: #64748b; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th { text-align: left; padding: 8px 12px; color: #64748b; font-weight: 500; border-bottom: 1px solid #e2e8f0; }
+    td { padding: 10px 12px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+    tr:last-child td { border-bottom: none; }
+    .tag { display: inline-block; font-size: 12px; padding: 2px 8px; border-radius: 4px; font-weight: 500; }
+    .tag-gym { background: #dbeafe; color: #1d4ed8; }
+    .tag-supplement { background: #fef3c7; color: #92400e; }
+    .tag-wellness { background: #f0fdf4; color: #166534; }
+    .tag-nutrition { background: #fdf4ff; color: #7e22ce; }
+    .tag-other { background: #f1f5f9; color: #475569; }
+    .toggle-btn { padding: 5px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+    .btn-active { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+    .btn-inactive { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+    .btn-primary { background: #6366f1; color: #fff; }
+    .btn-secondary { background: #f1f5f9; color: #0f172a; border: 1px solid #e2e8f0; }
+    .btn-sm { padding: 5px 12px; font-size: 12px; }
+    .btn-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+    #loading { text-align: center; color: #64748b; padding: 40px; }
+    .toast { position: fixed; bottom: 24px; right: 24px; background: #0f172a; color: #fff; padding: 12px 20px; border-radius: 10px; font-size: 14px; opacity: 0; transition: opacity .3s; pointer-events: none; z-index: 9999; }
+    .toast.show { opacity: 1; }
+
+    /* Modal */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 16px; }
+    .modal-overlay.hidden { display: none; }
+    .modal { background: #fff; border-radius: 14px; padding: 28px; max-width: 520px; width: 100%; box-shadow: 0 8px 40px rgba(0,0,0,.18); max-height: 90vh; overflow-y: auto; }
+    .modal h3 { font-size: 17px; font-weight: 600; margin-bottom: 20px; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .form-grid .full { grid-column: 1 / -1; }
+    .form-row { display: flex; flex-direction: column; gap: 5px; }
+    .form-row label { font-size: 13px; font-weight: 500; color: #475569; }
+    .modal-actions { display: flex; gap: 10px; margin-top: 22px; justify-content: flex-end; }
+
+    /* Expandable offers section */
+    .offers-row td { background: #f8fafc; padding: 0; }
+    .offers-inner { padding: 16px 20px; }
+    .offers-inner h4 { font-size: 13px; font-weight: 600; color: #475569; margin-bottom: 12px; text-transform: uppercase; letter-spacing: .05em; }
+    .offers-table { font-size: 13px; }
+    .offers-table th { font-size: 12px; color: #94a3b8; padding: 6px 10px; }
+    .offers-table td { padding: 8px 10px; }
+    .offer-actions { display: flex; gap: 6px; }
+    .expand-btn { background: none; border: 1px solid #e2e8f0; border-radius: 6px; color: #475569; padding: 4px 10px; font-size: 12px; }
+    .expand-btn:hover { background: #f1f5f9; opacity: 1; }
+    tr.partner-row:hover td { background: #f8fafc; }
+    .empty-offers { color: #94a3b8; font-size: 13px; padding: 8px 0; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Partner Admin</h1>
+  <span>Partner Marketplace</span>
+</header>
+
+<div class="container">
+  <div id="login-panel">
+    <h2>Admin Login</h2>
+    <p>Enter your admin token to manage partners.</p>
+    <input type="password" id="token-input" placeholder="Bearer token" autocomplete="current-password" />
+    <div id="error-msg">Invalid token. Please try again.</div>
+    <button id="login-btn">Sign In</button>
+  </div>
+
+  <div id="main-panel">
+    <div class="card">
+      <div class="card-header">
+        <h2>Partners</h2>
+        <div style="display:flex;gap:10px;align-items:center;">
+          <span class="badge-count" id="partner-count">0 partners</span>
+          <button class="btn-primary btn-sm" id="add-partner-btn">+ Add Partner</button>
+        </div>
+      </div>
+      <div id="loading">Loading partners…</div>
+      <table id="partners-table" style="display:none">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Category</th>
+            <th>Commission</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="partners-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Add / Edit Partner Modal -->
+<div class="modal-overlay hidden" id="partner-modal">
+  <div class="modal">
+    <h3 id="partner-modal-title">Add Partner</h3>
+    <div class="form-grid">
+      <div class="form-row full">
+        <label>Name</label>
+        <input type="text" id="pm-name" placeholder="e.g. MyGym Inc." />
+      </div>
+      <div class="form-row">
+        <label>Category</label>
+        <select id="pm-category">
+          <option value="gym">Gym</option>
+          <option value="supplement">Supplement</option>
+          <option value="wellness">Wellness</option>
+          <option value="nutrition">Nutrition</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label>Commission Rate (%)</label>
+        <input type="number" id="pm-commission" placeholder="0" min="0" max="100" step="0.1" />
+      </div>
+    </div>
+    <p id="pm-error" style="font-size:13px;color:#ef4444;margin-top:10px;display:none;"></p>
+    <div class="modal-actions">
+      <button class="btn-secondary" id="pm-cancel-btn">Cancel</button>
+      <button class="btn-primary" id="pm-save-btn">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add / Edit Offer Modal -->
+<div class="modal-overlay hidden" id="offer-modal">
+  <div class="modal">
+    <h3 id="offer-modal-title">Add Offer</h3>
+    <div class="form-grid">
+      <div class="form-row full">
+        <label>Title</label>
+        <input type="text" id="om-title" placeholder="e.g. 20% Off First Month" />
+      </div>
+      <div class="form-row full">
+        <label>Description</label>
+        <textarea id="om-description" placeholder="Short description of the offer…"></textarea>
+      </div>
+      <div class="form-row">
+        <label>Discount</label>
+        <input type="text" id="om-discount" placeholder="e.g. 20% off" />
+      </div>
+      <div class="form-row">
+        <label>Promo Code (optional)</label>
+        <input type="text" id="om-promo" placeholder="e.g. CALTRACK20" />
+      </div>
+      <div class="form-row full">
+        <label>Offer URL (optional)</label>
+        <input type="text" id="om-url" placeholder="https://…" />
+      </div>
+      <div class="form-row">
+        <label>Valid Until</label>
+        <input type="date" id="om-valid-until" />
+      </div>
+    </div>
+    <p id="om-error" style="font-size:13px;color:#ef4444;margin-top:10px;display:none;"></p>
+    <div class="modal-actions">
+      <button class="btn-secondary" id="om-cancel-btn">Cancel</button>
+      <button class="btn-primary" id="om-save-btn">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  let adminToken = '';
+  let editingPartnerId = null;
+  let editingOfferId = null;
+  let offerPartnerId = null;
+  let expandedPartners = new Set();
+
+  // Raw partner/offer data store keyed by id (populated on render, used by edit handlers)
+  const partnerStore = {};
+  const offerStore = {};
+
+  // ---- Helpers ----
+
+  function categoryTag(cat) {
+    const map = { gym: 'tag-gym', supplement: 'tag-supplement', wellness: 'tag-wellness', nutrition: 'tag-nutrition' };
+    const cls = map[cat] || 'tag-other';
+    return `<span class="tag ${cls}">${escHtml(cat)}</span>`;
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3000);
+  }
+
+  function getApiBase() {
+    const path = window.location.pathname;
+    const idx = path.indexOf('/admin/partners');
+    return idx > 0 ? path.slice(0, idx) : '';
+  }
+
+  function escHtml(str) {
+    if (str == null) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  // ---- Fetch ----
+
+  async function fetchPartners() {
+    const res = await fetch(`${getApiBase()}/api/partners`, {
+      headers: { 'Authorization': `Bearer ${adminToken}` }
+    });
+    if (res.status === 401) throw new Error('unauthorized');
+    const data = await res.json();
+    return data.partners || [];
+  }
+
+  async function fetchOffers(partnerId) {
+    const res = await fetch(`${getApiBase()}/api/partners/${partnerId}/offers`, {
+      headers: { 'Authorization': `Bearer ${adminToken}` }
+    });
+    const data = await res.json();
+    return data.offers || [];
+  }
+
+  // ---- Render partners ----
+
+  function renderPartners(partners) {
+    document.getElementById('partner-count').textContent = `${partners.length} partner${partners.length !== 1 ? 's' : ''}`;
+    const tbody = document.getElementById('partners-tbody');
+    tbody.innerHTML = '';
+
+    partners.forEach(p => {
+      const isActive = p.is_active ?? p.isActive;
+      const commRate = parseFloat(p.commission_rate ?? p.commissionRate ?? 0).toFixed(1);
+
+      // Store raw data for use by edit handlers
+      partnerStore[p.id] = {
+        name: p.name,
+        category: p.category,
+        commissionRate: commRate,
+      };
+
+      const row = document.createElement('tr');
+      row.className = 'partner-row';
+      row.id = `row-${p.id}`;
+      row.innerHTML = `
+        <td><strong>${escHtml(p.name)}</strong></td>
+        <td>${categoryTag(p.category)}</td>
+        <td>${escHtml(commRate)}%</td>
+        <td><span class="tag" style="${isActive ? 'background:#dcfce7;color:#166534' : 'background:#fee2e2;color:#991b1b'}">${isActive ? 'Active' : 'Inactive'}</span></td>
+        <td>
+          <div class="btn-actions">
+            <button class="expand-btn" data-partner-id="${escHtml(p.id)}" id="expand-${escHtml(p.id)}">&#9658; Offers</button>
+            <button class="btn-secondary btn-sm edit-partner-btn" data-partner-id="${escHtml(p.id)}">Edit</button>
+            <button class="toggle-btn ${isActive ? 'btn-active' : 'btn-inactive'} toggle-partner-btn"
+              data-partner-id="${escHtml(p.id)}" data-new-active="${!isActive}">
+              ${isActive ? 'Deactivate' : 'Activate'}
+            </button>
+          </div>
+        </td>
+      `;
+      tbody.appendChild(row);
+
+      const offersRow = document.createElement('tr');
+      offersRow.className = 'offers-row';
+      offersRow.id = `offers-row-${p.id}`;
+      offersRow.style.display = 'none';
+      offersRow.innerHTML = `<td colspan="5"><div class="offers-inner" id="offers-inner-${escHtml(p.id)}"></div></td>`;
+      tbody.appendChild(offersRow);
+
+      if (expandedPartners.has(p.id)) {
+        offersRow.style.display = '';
+        document.getElementById(`expand-${p.id}`).textContent = '▾ Offers';
+        loadOffers(p.id);
+      }
+    });
+
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('partners-table').style.display = 'table';
+  }
+
+  // ---- Event delegation on partners tbody ----
+
+  document.getElementById('partners-tbody').addEventListener('click', async (e) => {
+    const expandBtn = e.target.closest('.expand-btn');
+    if (expandBtn) {
+      const pid = expandBtn.dataset.partnerId;
+      await toggleOffers(pid, expandBtn);
+      return;
+    }
+
+    const editBtn = e.target.closest('.edit-partner-btn');
+    if (editBtn) {
+      openEditPartner(editBtn.dataset.partnerId);
+      return;
+    }
+
+    const toggleBtn = e.target.closest('.toggle-partner-btn');
+    if (toggleBtn) {
+      const pid = toggleBtn.dataset.partnerId;
+      const newActive = toggleBtn.dataset.newActive === 'true';
+      await togglePartner(pid, newActive);
+    }
+  });
+
+  // ---- Offers expand / load ----
+
+  async function toggleOffers(partnerId, btn) {
+    const offersRow = document.getElementById(`offers-row-${partnerId}`);
+    const isOpen = offersRow.style.display !== 'none';
+    if (isOpen) {
+      offersRow.style.display = 'none';
+      btn.innerHTML = '&#9658; Offers';
+      expandedPartners.delete(partnerId);
+    } else {
+      offersRow.style.display = '';
+      btn.innerHTML = '&#9660; Offers';
+      expandedPartners.add(partnerId);
+      await loadOffers(partnerId);
+    }
+  }
+
+  async function loadOffers(partnerId) {
+    const inner = document.getElementById(`offers-inner-${partnerId}`);
+    inner.innerHTML = '<p style="color:#94a3b8;font-size:13px;">Loading…</p>';
+    const offers = await fetchOffers(partnerId);
+    renderOffers(partnerId, offers);
+  }
+
+  function renderOffers(partnerId, offers) {
+    const inner = document.getElementById(`offers-inner-${partnerId}`);
+    inner.innerHTML = '';
+
+    const heading = document.createElement('h4');
+    heading.textContent = 'Offers';
+    inner.appendChild(heading);
+
+    if (offers.length === 0) {
+      const empty = document.createElement('p');
+      empty.className = 'empty-offers';
+      empty.textContent = 'No offers yet.';
+      inner.appendChild(empty);
+    } else {
+      const table = document.createElement('table');
+      table.className = 'offers-table';
+      table.style.width = '100%';
+      table.innerHTML = `
+        <thead><tr>
+          <th>Title</th><th>Discount</th><th>Promo Code</th><th>Valid Until</th><th></th>
+        </tr></thead>
+        <tbody></tbody>
+      `;
+      const tbody = table.querySelector('tbody');
+      offers.forEach(o => {
+        const raw = {
+          title: o.title,
+          description: o.description,
+          discount: o.discount,
+          promo_code: o.promo_code ?? o.promoCode ?? '',
+          offer_url: o.offer_url ?? o.offerUrl ?? '',
+          valid_until: o.valid_until ?? o.validUntil ?? '',
+        };
+        offerStore[o.id] = raw;
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${escHtml(o.title)}</td>
+          <td>${escHtml(o.discount)}</td>
+          <td>${escHtml(o.promo_code ?? o.promoCode ?? '—')}</td>
+          <td>${escHtml(o.valid_until ?? o.validUntil ?? '')}</td>
+          <td>
+            <div class="offer-actions">
+              <button class="btn-secondary btn-sm edit-offer-btn"
+                data-partner-id="${escHtml(partnerId)}"
+                data-offer-id="${escHtml(o.id)}">Edit</button>
+            </div>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+      inner.appendChild(table);
+    }
+
+    const addBtn = document.createElement('button');
+    addBtn.className = 'btn-primary btn-sm';
+    addBtn.style.marginTop = '12px';
+    addBtn.textContent = '+ Add Offer';
+    addBtn.dataset.partnerId = partnerId;
+    addBtn.addEventListener('click', () => openAddOffer(partnerId));
+    inner.appendChild(addBtn);
+
+    // Attach edit-offer listeners
+    inner.querySelectorAll('.edit-offer-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        openEditOffer(btn.dataset.partnerId, btn.dataset.offerId);
+      });
+    });
+  }
+
+  // ---- Toggle partner active ----
+
+  async function togglePartner(id, newActive) {
+    try {
+      const res = await fetch(`${getApiBase()}/api/partners/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${adminToken}` },
+        body: JSON.stringify({ is_active: newActive })
+      });
+      if (!res.ok) throw new Error('Failed');
+      const data = await res.json();
+      const p = data.partner;
+      showToast(`${p.name} is now ${p.isActive ? 'active' : 'inactive'}`);
+      loadPartners();
+    } catch (e) {
+      showToast('Failed to update partner');
+    }
+  }
+
+  // ---- Load partners ----
+
+  async function loadPartners() {
+    document.getElementById('loading').style.display = 'block';
+    document.getElementById('partners-table').style.display = 'none';
+    const partners = await fetchPartners();
+    renderPartners(partners);
+  }
+
+  // ---- Partner modal ----
+
+  function openAddPartner() {
+    editingPartnerId = null;
+    document.getElementById('partner-modal-title').textContent = 'Add Partner';
+    document.getElementById('pm-name').value = '';
+    document.getElementById('pm-category').value = 'gym';
+    document.getElementById('pm-commission').value = '0';
+    document.getElementById('pm-error').style.display = 'none';
+    document.getElementById('pm-save-btn').textContent = 'Create';
+    document.getElementById('partner-modal').classList.remove('hidden');
+    setTimeout(() => document.getElementById('pm-name').focus(), 50);
+  }
+
+  function openEditPartner(id) {
+    const p = partnerStore[id];
+    if (!p) return;
+    editingPartnerId = id;
+    document.getElementById('partner-modal-title').textContent = 'Edit Partner';
+    document.getElementById('pm-name').value = p.name;
+    document.getElementById('pm-category').value = p.category;
+    document.getElementById('pm-commission').value = p.commissionRate;
+    document.getElementById('pm-error').style.display = 'none';
+    document.getElementById('pm-save-btn').textContent = 'Save Changes';
+    document.getElementById('partner-modal').classList.remove('hidden');
+    setTimeout(() => document.getElementById('pm-name').focus(), 50);
+  }
+
+  function closePartnerModal() {
+    document.getElementById('partner-modal').classList.add('hidden');
+  }
+
+  async function savePartner() {
+    const name = document.getElementById('pm-name').value.trim();
+    const category = document.getElementById('pm-category').value;
+    const commission_rate = document.getElementById('pm-commission').value;
+    const errEl = document.getElementById('pm-error');
+
+    if (!name) { errEl.textContent = 'Name is required.'; errEl.style.display = 'block'; return; }
+    errEl.style.display = 'none';
+
+    const btn = document.getElementById('pm-save-btn');
+    btn.disabled = true;
+    btn.textContent = 'Saving…';
+
+    try {
+      const url = editingPartnerId
+        ? `${getApiBase()}/api/partners/${editingPartnerId}`
+        : `${getApiBase()}/api/partners`;
+      const method = editingPartnerId ? 'PUT' : 'POST';
+
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${adminToken}` },
+        body: JSON.stringify({ name, category, commission_rate })
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Request failed');
+      }
+
+      const data = await res.json();
+      showToast(editingPartnerId ? `${data.partner.name} updated` : `${data.partner.name} created`);
+      closePartnerModal();
+      loadPartners();
+    } catch (e) {
+      errEl.textContent = e.message || 'Something went wrong.';
+      errEl.style.display = 'block';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = editingPartnerId ? 'Save Changes' : 'Create';
+    }
+  }
+
+  // ---- Offer modal ----
+
+  function openAddOffer(partnerId) {
+    offerPartnerId = partnerId;
+    editingOfferId = null;
+    document.getElementById('offer-modal-title').textContent = 'Add Offer';
+    document.getElementById('om-title').value = '';
+    document.getElementById('om-description').value = '';
+    document.getElementById('om-discount').value = '';
+    document.getElementById('om-promo').value = '';
+    document.getElementById('om-url').value = '';
+    document.getElementById('om-valid-until').value = '';
+    document.getElementById('om-error').style.display = 'none';
+    document.getElementById('om-save-btn').textContent = 'Create';
+    document.getElementById('offer-modal').classList.remove('hidden');
+    setTimeout(() => document.getElementById('om-title').focus(), 50);
+  }
+
+  function openEditOffer(partnerId, offerId) {
+    const o = offerStore[offerId];
+    if (!o) return;
+    offerPartnerId = partnerId;
+    editingOfferId = offerId;
+    document.getElementById('offer-modal-title').textContent = 'Edit Offer';
+    document.getElementById('om-title').value = o.title;
+    document.getElementById('om-description').value = o.description;
+    document.getElementById('om-discount').value = o.discount;
+    document.getElementById('om-promo').value = o.promo_code;
+    document.getElementById('om-url').value = o.offer_url;
+    document.getElementById('om-valid-until').value = o.valid_until;
+    document.getElementById('om-error').style.display = 'none';
+    document.getElementById('om-save-btn').textContent = 'Save Changes';
+    document.getElementById('offer-modal').classList.remove('hidden');
+    setTimeout(() => document.getElementById('om-title').focus(), 50);
+  }
+
+  function closeOfferModal() {
+    document.getElementById('offer-modal').classList.add('hidden');
+  }
+
+  async function saveOffer() {
+    const title = document.getElementById('om-title').value.trim();
+    const description = document.getElementById('om-description').value.trim();
+    const discount = document.getElementById('om-discount').value.trim();
+    const promo_code = document.getElementById('om-promo').value.trim();
+    const offer_url = document.getElementById('om-url').value.trim();
+    const valid_until = document.getElementById('om-valid-until').value;
+    const errEl = document.getElementById('om-error');
+
+    if (!title || !description || !discount || !valid_until) {
+      errEl.textContent = 'Title, description, discount and valid until are required.';
+      errEl.style.display = 'block';
+      return;
+    }
+    errEl.style.display = 'none';
+
+    const btn = document.getElementById('om-save-btn');
+    btn.disabled = true;
+    btn.textContent = 'Saving…';
+
+    try {
+      const url = editingOfferId
+        ? `${getApiBase()}/api/partners/${offerPartnerId}/offers/${editingOfferId}`
+        : `${getApiBase()}/api/partners/${offerPartnerId}/offers`;
+      const method = editingOfferId ? 'PUT' : 'POST';
+
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${adminToken}` },
+        body: JSON.stringify({ title, description, discount, promo_code, offer_url, valid_until })
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Request failed');
+      }
+
+      showToast(editingOfferId ? 'Offer updated' : 'Offer created');
+      closeOfferModal();
+      await loadOffers(offerPartnerId);
+    } catch (e) {
+      errEl.textContent = e.message || 'Something went wrong.';
+      errEl.style.display = 'block';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = editingOfferId ? 'Save Changes' : 'Create';
+    }
+  }
+
+  // ---- Wire up static button listeners ----
+
+  document.getElementById('add-partner-btn').addEventListener('click', openAddPartner);
+  document.getElementById('pm-save-btn').addEventListener('click', savePartner);
+  document.getElementById('pm-cancel-btn').addEventListener('click', closePartnerModal);
+  document.getElementById('om-save-btn').addEventListener('click', saveOffer);
+  document.getElementById('om-cancel-btn').addEventListener('click', closeOfferModal);
+
+  document.getElementById('partner-modal').addEventListener('click', (e) => {
+    if (e.target === e.currentTarget) closePartnerModal();
+  });
+  document.getElementById('offer-modal').addEventListener('click', (e) => {
+    if (e.target === e.currentTarget) closeOfferModal();
+  });
+
+  // ---- Login ----
+
+  document.getElementById('login-btn').addEventListener('click', async () => {
+    const input = document.getElementById('token-input').value.trim();
+    if (!input) return;
+    adminToken = input;
+    try {
+      await fetchPartners();
+      document.getElementById('login-panel').style.display = 'none';
+      document.getElementById('main-panel').style.display = 'block';
+      loadPartners();
+    } catch (e) {
+      document.getElementById('error-msg').style.display = 'block';
+      adminToken = '';
+    }
+  });
+
+  document.getElementById('token-input').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') document.getElementById('login-btn').click();
+  });
+</script>
+</body>
+</html>

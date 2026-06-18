@@ -1,0 +1,51 @@
+Here’s a clear, actionable prompt you can copy and paste into Replit (or any AI coding assistant) to enhance your existing Calories Coach home page:
+
+---
+
+**Prompt for Replit (or AI Assistant):**
+
+> I have an existing Calories Coach app homepage (built with HTML/CSS/JS). I need you to modify the code to meet these requirements:
+>
+> **1. Overall Dashboard (Top Section)**  
+> - Show **calories eaten** (total from food logs) and **calories burned** (total from Apple Health + secondary exercises) in two prominent cards, similar to the first attached screenshot.  
+> - Below that, show **net calories** (eaten – burned) and **remaining calories** (daily goal – net). Daily goal = 2305 kcal.
+>
+> **2. Food Logs (Eaten)**  
+> - Display a list of logged foods with name and calories.  
+> - Allow users to **add** a new food (name + kcal).  
+> - Allow **delete** each food item.  
+> - Total eaten updates automatically.
+>
+> **3. Calories Burned – Two Sources**  
+> - **Source A: Apple Health data**  
+>   - Show steps count and convert steps to approximate active calories (e.g., steps × 0.0225).  
+>   - Also include “Other active calories” (simulated from Apple Health, e.g., general movement).  
+>   - Provide a **“Fetch latest Apple Health data”** button that randomly updates steps and other active calories (simulate real sync).  
+>   - Total from Apple Health = step calories + other active calories.
+> - **Source B: Secondary exercise (from “health tab” / manual entry)**  
+>   - This is an **additional calorie burn source** that stacks on top of Apple Health.  
+>   - Users can add an exercise with a name and calories burned (e.g., “Running 5km – 300 kcal”).  
+>   - Show list of added secondary exercises with delete option.  
+>   - Total burned = Apple Health total + sum of secondary exercise calories.
+>
+> **4. Real-time Updates**  
+> - Any change (add/delete food, add/delete secondary exercise, sync Apple Health) must immediately update:  
+>   - Total eaten, total burned, net calories, remaining calories.  
+>   - Also update the burned breakdown section.
+>
+> **5. Visual & Layout**  
+> - Use a clean, mobile-friendly design (max width ~500px, centered).  
+> - Match the style of a modern calorie tracker: cards, icons, soft shadows.  
+> - Show placeholder data to demonstrate functionality (e.g., a few sample food logs, one sample secondary exercise).  
+> - Ensure all interactive elements (buttons, inputs) are fully functional in plain HTML/CSS/JS (no external frameworks required, but FontAwesome or similar icons are fine).
+>
+> **6. Edge Cases**  
+> - Handle empty lists gracefully (show “No foods logged” / “No exercises added”).  
+> - Input validation for calories (positive numbers).  
+> - Net calories can be negative – show it with a sign.
+>
+> **Please output the complete HTML/CSS/JS code** that I can directly replace my current homepage with. The code should be self-contained and run immediately in a browser.
+
+---
+
+Copy the above prompt and paste it into Replit’s AI chat or into any assistant that generates front‑end code. It tells the AI exactly what to modify, how data flows, and what the UI should look like.

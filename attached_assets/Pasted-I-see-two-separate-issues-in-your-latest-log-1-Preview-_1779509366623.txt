@@ -1,0 +1,102 @@
+I see two separate issues in your latest log:
+
+1. **Preview not working** – This was already fixed by removing the `ClerkLoaded` wrapper. The preview should now show the CalorieCam login screen. If it's still white, try a hard refresh or restart the Replit preview pane.
+
+2. **EAS build failing** – The critical error now is:
+   ```
+   Failed to resolve iOS entitlements from Expo config using the bundled config fallback: Cannot find 'expo-modules-autolinking' package in your project, make sure that you have 'expo' package installed
+   ```
+
+This happens because your monorepo setup (10 workspaces) causes EAS to look for `expo-modules-autolinking` at the wrong level. Let's fix it so you can rebuild with the new device UDID.
+
+## 🔧 Fix the EAS build error
+
+### Step 1: Ensure `expo` and `expo-modules-autolinking` are installed in the correct workspace
+
+In your Replit terminal, run:
+
+```bash
+cd ~/workspace/artifacts/calorie-tracker
+pnpm add expo expo-modules-autolinking
+```
+
+If you are using a monorepo, also run from the root:
+
+```bash
+cd ~/workspace
+pnpm add -w expo-modules-autolinking
+```
+
+### Step 2: Create a proper `metro.config.js` in the calorie-tracker workspace
+
+EAS needs Metro config to resolve modules correctly. Create or edit `/home/runner/workspace/artifacts/calorie-tracker/metro.config.js`:
+
+```javascript
+const { getDefaultConfig } = require('expo/metro-config');
+const path = require('path');
+
+const config = getDefaultConfig(__dirname);
+
+// For monorepo support
+config.watchFolders = [path.resolve(__dirname, '../..')];
+config.resolver.nodeModulesPaths = [
+  path.resolve(__dirname, 'node_modules'),
+  path.resolve(__dirname, '../../node_modules'),
+];
+
+module.exports = config;
+```
+
+### Step 3: Update `eas.json` to explicitly set the project root
+
+In your `eas.json` (the one you already have), add a `"cli"` section with `"projectRoot"` if needed, but more importantly, set `"expo"` autolinking. Alternatively, add a hook to run `expo prebuild` if necessary.
+
+But the cleaner fix: ensure the `expo` package is properly hoisted. In your root `package.json`, add:
+
+```json
+"pnpm": {
+  "overrides": {
+    "expo-modules-autolinking": "latest"
+  }
+}
+```
+
+Then run `pnpm install` again.
+
+### Step 4: Commit and push all changes to GitHub
+
+Use Replit's **Version Control** panel (left sidebar, Git icon) to commit and push the updated `metro.config.js`, `package.json`, and lockfile.
+
+If you still have trouble with `git push`, use the Replit Git panel – it should be already connected. Click **"All changes"**, write a commit message, then click **"Push"**.
+
+### Step 5: Trigger a new EAS build
+
+After pushing, run:
+
+```bash
+eas build --platform ios --profile internal-test
+```
+
+When prompted about the provisioning profile, choose **"No, let me choose devices again"** and select **all devices** (including the new UDID you added in Apple Developer). The build will then create an updated IPA for all 100 devices.
+
+## 🚨 If the build still fails with the same error
+
+Run this diagnostic in your Replit terminal:
+
+```bash
+ls -la node_modules/expo-modules-autolinking
+```
+
+If it's missing, force install it:
+
+```bash
+pnpm add -D expo-modules-autolinking --filter calorie-tracker
+```
+
+Then try the build again.
+
+## 📱 After a successful build
+
+You'll get a download link to the `.ipa`. Install it on the new iPhone (with the newly added UDID) via internal distribution (e.g., using Apple Configurator, a mobile device management tool, or a simple HTTPS server with the IPA and manifest).
+
+Let me know which step fails, and I'll guide you through it.
