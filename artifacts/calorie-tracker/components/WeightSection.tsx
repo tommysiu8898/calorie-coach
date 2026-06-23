@@ -238,35 +238,11 @@ function WeightChart({
       )}
 
       {hasPlanLine && planX1 != null && planY1 != null && (
-        <>
-          <Circle cx={planX1} cy={planY1} r={4} fill="#3b82f6" stroke={colors.card} strokeWidth={1.5} />
-          <SvgText
-            x={planX1 + 6}
-            y={planY1 < 20 ? planY1 + 16 : planY1 - 5}
-            fontSize={9}
-            fontWeight="600"
-            fill="#3b82f6"
-            textAnchor="start"
-          >
-            {goalPlan!.startWeightKg} kg
-          </SvgText>
-        </>
+        <Circle cx={planX1} cy={planY1} r={4} fill="#3b82f6" stroke={colors.card} strokeWidth={1.5} />
       )}
 
       {hasPlanLine && planX2 != null && planY2 != null && (
-        <>
-          <Circle cx={planX2} cy={planY2} r={4} fill="#3b82f6" stroke={colors.card} strokeWidth={1.5} />
-          <SvgText
-            x={planX2 - 6}
-            y={planY2 < 20 ? planY2 + 16 : planY2 - 5}
-            fontSize={9}
-            fontWeight="600"
-            fill="#3b82f6"
-            textAnchor="end"
-          >
-            {goalPlan!.targetWeightKg} kg
-          </SvgText>
-        </>
+        <Circle cx={planX2} cy={planY2} r={4} fill="#3b82f6" stroke={colors.card} strokeWidth={1.5} />
       )}
 
       {hasPlanLine && (

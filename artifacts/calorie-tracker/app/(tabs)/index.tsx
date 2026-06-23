@@ -535,14 +535,14 @@ function WaterSection({ cups, totalOz, goalOz, onIncrement, onDecrement, readonl
         </View>
         <Ionicons name="water" size={22} color="#3b82f6" />
       </View>
-      <View style={{ flexDirection: "row", gap: 8, marginBottom: 12, flexWrap: "wrap", opacity: readonly ? 0.55 : 1 }}>
+      <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 12, opacity: readonly ? 0.55 : 1 }}>
         {Array.from({ length: WATER_CUPS_GOAL }, (_, i) => {
           const filled = i < cups;
           return (
             <TouchableOpacity key={i} onPress={readonly ? undefined : (filled ? onDecrement : onIncrement)}
               activeOpacity={readonly ? 1 : 0.7}
-              style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: filled ? "#3b82f6" : colors.muted, borderWidth: 2, borderColor: filled ? "#3b82f6" : colors.border, alignItems: "center", justifyContent: "center" }}>
-              {filled ? <Ionicons name="water" size={14} color="#fff" /> : null}
+              style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: filled ? "#3b82f6" : colors.muted, borderWidth: 2, borderColor: filled ? "#3b82f6" : colors.border, alignItems: "center", justifyContent: "center" }}>
+              {filled ? <Ionicons name="water" size={15} color="#fff" /> : null}
             </TouchableOpacity>
           );
         })}
