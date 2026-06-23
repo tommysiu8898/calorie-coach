@@ -7,7 +7,6 @@ import {
   Platform,
   Alert,
   TextInput,
-  Dimensions,
 } from "react-native";
 import Svg, { Circle, Polyline, Line as SvgLine, Text as SvgText } from "react-native-svg";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -162,8 +161,8 @@ function WeightChart({
   viewMode: "week" | "month";
   colors: Colors;
 }) {
-  const { width: SCREEN_WIDTH } = Dimensions.get("window");
-  const chartWidth = SCREEN_WIDTH - 76;
+  const { t } = useI18n();
+  const [chartWidth, setChartWidth] = useState(300);
   const chartHeight = 110;
 
   const todayMs = (() => { const d = new Date(); d.setHours(23, 59, 59, 999); return d.getTime(); })();
@@ -183,7 +182,7 @@ function WeightChart({
     return (
       <View style={{ height: chartHeight, alignItems: "center", justifyContent: "center" }}>
         <Text style={{ color: colors.mutedForeground, fontSize: 12, fontFamily: "Inter_400Regular", textAlign: "center" }}>
-          Log weight on multiple days to see your progress chart
+          {t("weight_chart_empty")}
         </Text>
       </View>
     );
@@ -218,6 +217,7 @@ function WeightChart({
   const todayX = toX(todayMs);
 
   return (
+    <View onLayout={(e) => setChartWidth(e.nativeEvent.layout.width)}>
     <Svg width={chartWidth} height={chartHeight} style={{ marginTop: 10 }}>
       {hasPlanLine && planX1 != null && planY1 != null && planX2 != null && planY2 != null ? (
         <SvgLine
@@ -242,7 +242,7 @@ function WeightChart({
           <Circle cx={planX1} cy={planY1} r={4} fill="#3b82f6" stroke={colors.card} strokeWidth={1.5} />
           <SvgText
             x={planX1 + 6}
-            y={planY1 - 5}
+            y={planY1 < 20 ? planY1 + 16 : planY1 - 5}
             fontSize={9}
             fontWeight="600"
             fill="#3b82f6"
@@ -258,7 +258,7 @@ function WeightChart({
           <Circle cx={planX2} cy={planY2} r={4} fill="#3b82f6" stroke={colors.card} strokeWidth={1.5} />
           <SvgText
             x={planX2 - 6}
-            y={planY2 - 5}
+            y={planY2 < 20 ? planY2 + 16 : planY2 - 5}
             fontSize={9}
             fontWeight="600"
             fill="#3b82f6"
@@ -303,6 +303,7 @@ function WeightChart({
         />
       ))}
     </Svg>
+    </View>
   );
 }
 
@@ -449,10 +450,9 @@ export function WeightSection({
             paddingVertical: 3,
           }}>
             <Text style={{ fontSize: 12, fontFamily: "Inter_500Medium", color: "#3b82f6" }}>
-              Started: {initialWeight} kg
+              {t("weight_started_label")}: {initialWeight} kg
             </Text>
           </View>
-          <Text style={{ fontSize: 12, color: colors.mutedForeground }}>→ now</Text>
         </View>
       )}
 
@@ -565,7 +565,7 @@ export function WeightSection({
                   viewMode === mode ? "#fff" : colors.mutedForeground,
               }}
             >
-              {mode === "week" ? "Week" : "Month"}
+              {mode === "week" ? t("weight_view_week") : t("weight_view_month")}
             </Text>
           </TouchableOpacity>
         ))}
@@ -579,8 +579,8 @@ export function WeightSection({
           }}
         >
           {goalPlan
-            ? `— Plan: ${goalPlan.startWeightKg} → ${goalPlan.targetWeightKg} kg`
-            : `— Goal: ${goalWeight} kg`}
+            ? `— ${t("weight_plan_label")}: ${goalPlan.startWeightKg} → ${goalPlan.targetWeightKg} kg`
+            : `— ${t("weight_goal_label")}: ${goalWeight} kg`}
         </Text>
       </View>
 
@@ -620,14 +620,18 @@ export function WeightSection({
           >
             <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
               <Text style={{ fontSize: 12, fontFamily: "Inter_600SemiBold", color: colors.foreground }}>
-                {isComplete ? "🎯 Goal period complete" : `Week ${currentWeek} of ${goalPlan.durationWeeks}`}
+                {isComplete
+                  ? t("weight_goal_period_complete")
+                  : t("weight_week_progress").replace("{n}", String(currentWeek)).replace("{total}", String(goalPlan.durationWeeks))}
               </Text>
               <Text style={{ fontSize: 12, fontFamily: "Inter_400Regular", color: colors.mutedForeground }}>
-                {isComplete ? "Goal reached!" : `${daysRemaining} day${daysRemaining !== 1 ? "s" : ""} remaining`}
+                {isComplete
+                  ? t("weight_goal_reached")
+                  : t("weight_days_remaining").replace("{n}", String(daysRemaining))}
               </Text>
             </View>
 
-            <View style={{ gap: 4 }}>
+            <View style={{ gap: 4, paddingRight: 64 }}>
               <View
                 style={{
                   height: 6,
@@ -646,7 +650,7 @@ export function WeightSection({
                 />
               </View>
               <Text style={{ fontSize: 11, fontFamily: "Inter_400Regular", color: colors.mutedForeground, textAlign: "right" }}>
-                {weightPct}% progress
+                {t("weight_pct_progress").replace("{n}", String(weightPct))}
               </Text>
             </View>
           </View>

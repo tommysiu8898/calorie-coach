@@ -249,6 +249,48 @@ export async function analyzeFood(
   };
 }
 
+// ─── 1b. Generate food nutrition from text description ────────────────────────
+
+export async function generateFoodFromText(
+  description: string,
+  languageCode?: string,
+): Promise<{ name: string; calories: number; proteinG: number; carbsG: number; fatG: number; servingLabel: string; servingGrams: number }> {
+  const lang = languageCode ?? "en";
+  const langDir = lang === "zh-TW"
+    ? " Respond with the food name in Traditional Chinese."
+    : lang === "zh-CN"
+    ? " Respond with the food name in Simplified Chinese."
+    : "";
+
+  const systemPrompt = `You are a nutrition database assistant. Given a food description, return ONLY a JSON object with estimated nutrition per standard serving. No markdown, no extra text.${langDir}
+
+JSON format:
+{
+  "name": "food name",
+  "calories": number,
+  "proteinG": number,
+  "carbsG": number,
+  "fatG": number,
+  "servingLabel": "e.g. 1 cup (240g)",
+  "servingGrams": number
+}
+
+Use standard serving sizes. Round calories to whole numbers and macros to 1 decimal place.`;
+
+  const raw = await callKimi({
+    model: TEXT_MODEL,
+    systemPrompt,
+    userText: `Food: ${description}`,
+    maxTokens: 512,
+    temperature: 0.2,
+  });
+
+  return JSON.parse(extractJson(raw)) as {
+    name: string; calories: number; proteinG: number;
+    carbsG: number; fatG: number; servingLabel: string; servingGrams: number;
+  };
+}
+
 // ─── 2. Coach — Weekly Analysis ───────────────────────────────────────────────
 
 function formatMealSummary(meals: LocalMeal[]): string {

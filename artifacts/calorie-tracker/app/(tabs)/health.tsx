@@ -98,10 +98,10 @@ function WeeklyChart({
   const maxVal = Math.max(...data.map((d) => d.value), 1);
   const CHART_HEIGHT = 120;
   const BAR_COUNT = data.length;
-  const CHART_WIDTH = 280;
-  const barWidth = Math.floor((CHART_WIDTH - (BAR_COUNT - 1) * 6) / BAR_COUNT);
+  const [chartWidth, setChartWidth] = React.useState(280);
+  const barWidth = Math.floor((chartWidth - (BAR_COUNT - 1) * 6) / BAR_COUNT);
 
-  const dayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  const dayLabels = t("day_letters").split(",");
   const todayStr = new Date().toLocaleDateString("sv");
 
   return (
@@ -112,6 +112,7 @@ function WeeklyChart({
         borderWidth: 1,
         borderColor: colors.border,
         padding: 16,
+        paddingRight: Platform.OS === "web" ? 80 : 16,
         marginHorizontal: 20,
         marginTop: 16,
       }}
@@ -126,59 +127,60 @@ function WeeklyChart({
       >
         {t("health_weekly_chart")}
       </Text>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-        <View style={{ flexDirection: "column", gap: 8 }}>
-          <Svg width={CHART_WIDTH} height={CHART_HEIGHT}>
-            {data.map((d, i) => {
-              const barH = maxVal > 0 ? Math.max(4, Math.round((d.value / maxVal) * CHART_HEIGHT)) : 4;
-              const x = i * (barWidth + 6);
-              const y = CHART_HEIGHT - barH;
-              const isToday = d.date === todayStr;
-              return (
-                <Rect
-                  key={d.date}
-                  x={x}
-                  y={y}
-                  width={barWidth}
-                  height={barH}
-                  rx={5}
-                  fill={isToday ? "#f97316" : colors.foreground + "55"}
-                />
-              );
-            })}
-          </Svg>
-          <View style={{ flexDirection: "row", gap: 6 }}>
-            {data.map((d, i) => {
-              const dayIdx = new Date(d.date + "T12:00:00").getDay();
-              const isToday = d.date === todayStr;
-              return (
-                <View key={d.date} style={{ width: barWidth, alignItems: "center" }}>
+      <View
+        style={{ flexDirection: "column", gap: 8 }}
+        onLayout={(e) => setChartWidth(e.nativeEvent.layout.width)}
+      >
+        <Svg width={chartWidth} height={CHART_HEIGHT}>
+          {data.map((d, i) => {
+            const barH = maxVal > 0 ? Math.max(4, Math.round((d.value / maxVal) * CHART_HEIGHT)) : 4;
+            const x = i * (barWidth + 6);
+            const y = CHART_HEIGHT - barH;
+            const isToday = d.date === todayStr;
+            return (
+              <Rect
+                key={d.date}
+                x={x}
+                y={y}
+                width={barWidth}
+                height={barH}
+                rx={5}
+                fill={isToday ? "#f97316" : colors.foreground + "55"}
+              />
+            );
+          })}
+        </Svg>
+        <View style={{ flexDirection: "row", gap: 6 }}>
+          {data.map((d, i) => {
+            const dayIdx = new Date(d.date + "T12:00:00").getDay();
+            const isToday = d.date === todayStr;
+            return (
+              <View key={d.date} style={{ width: barWidth, alignItems: "center" }}>
+                <Text
+                  style={{
+                    fontSize: 9,
+                    fontFamily: "Inter_500Medium",
+                    color: isToday ? "#f97316" : colors.mutedForeground,
+                  }}
+                >
+                  {dayLabels[dayIdx]}
+                </Text>
+                {d.value > 0 && (
                   <Text
                     style={{
-                      fontSize: 9,
-                      fontFamily: "Inter_500Medium",
-                      color: isToday ? "#f97316" : colors.mutedForeground,
+                      fontSize: 8,
+                      fontFamily: "Inter_400Regular",
+                      color: colors.mutedForeground,
                     }}
                   >
-                    {dayLabels[dayIdx]}
+                    {d.value}
                   </Text>
-                  {d.value > 0 && (
-                    <Text
-                      style={{
-                        fontSize: 8,
-                        fontFamily: "Inter_400Regular",
-                        color: colors.mutedForeground,
-                      }}
-                    >
-                      {d.value}
-                    </Text>
-                  )}
-                </View>
-              );
-            })}
-          </View>
+                )}
+              </View>
+            );
+          })}
         </View>
-      </ScrollView>
+      </View>
     </View>
   );
 }

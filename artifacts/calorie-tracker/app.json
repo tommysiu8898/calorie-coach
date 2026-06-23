@@ -84,15 +84,15 @@
     },
     "extra": {
       "eas": {
-        "projectId": "1aaeeb63-ca95-49ab-85ec-9afc68de122b"
+        "projectId": "31905a20-1326-4e1f-9add-c591bd2a779a"
       }
     },
-    "owner": "ktmcheung9",
+    "owner": "ky1019",
     "runtimeVersion": {
       "policy": "appVersion"
     },
     "updates": {
-      "url": "https://u.expo.dev/1aaeeb63-ca95-49ab-85ec-9afc68de122b"
+      "url": ""
     }
   }
 }

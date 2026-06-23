@@ -15,6 +15,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons } from "@expo/vector-icons";
 import { useColors } from "@/hooks/useColors";
 import { useApp } from "@/context/AppContext";
+import { useI18n } from "@/hooks/useI18n";
 import Animated, {
   FadeInRight,
   FadeInUp,
@@ -29,38 +30,20 @@ const ONBOARDING_DRAFT_KEY = "@calorie_tracker/onboardingDraft";
 type StepId = "gender" | "age" | "height" | "weight" | "duration" | "goal" | "activity" | "confirm";
 const STEPS: StepId[] = ["gender", "age", "height", "weight", "duration", "goal", "activity", "confirm"];
 
-const STEP_META: Record<StepId, { emoji: string; title: string; subtitle: string }> = {
-  gender:   { emoji: "🧬", title: "What's your gender?",        subtitle: "Used to calculate your metabolic rate" },
-  age:      { emoji: "🎂", title: "What year were you born?",   subtitle: "Your age affects your calorie needs" },
-  height:   { emoji: "📏", title: "How tall are you?",          subtitle: "Enter your height in centimeters" },
-  weight:   { emoji: "⚖️", title: "What's your weight?",       subtitle: "Current and target weight" },
-  duration: { emoji: "📅", title: "How long is your plan?",     subtitle: "Set a realistic timeline to reach your goal" },
-  goal:     { emoji: "🎯", title: "What's your goal?",          subtitle: "We'll set your daily calorie target" },
-  activity: { emoji: "🏃", title: "Activity level?",            subtitle: "How active are you day-to-day?" },
-  confirm:  { emoji: "🎉", title: "You're all set!",            subtitle: "Your personalized plan is ready" },
+const STEP_EMOJIS: Record<StepId, string> = {
+  gender: "🧬", age: "🎂", height: "📏", weight: "⚖️",
+  duration: "📅", goal: "🎯", activity: "🏃", confirm: "🎉",
 };
 
-const GOALS: { id: string; emoji: string; label: string; sub: string }[] = [
-  { id: "lose",     emoji: "📉", label: "Lose weight",     sub: "Calorie deficit" },
-  { id: "maintain", emoji: "⚖️", label: "Maintain weight", sub: "Balance calories" },
-  { id: "gain",     emoji: "💪", label: "Gain muscle",     sub: "Calorie surplus" },
-];
+const GOAL_EMOJIS: Record<string, string> = {
+  lose: "📉", maintain: "⚖️", gain: "💪",
+};
 
-const ACTIVITIES: { id: string; emoji: string; label: string; sub: string }[] = [
-  { id: "sedentary",   emoji: "🛋️", label: "Sedentary",         sub: "Little to no exercise" },
-  { id: "light",       emoji: "🚶", label: "Lightly active",     sub: "Exercise 1–3 days/week" },
-  { id: "moderate",    emoji: "🏋️", label: "Moderately active",  sub: "Exercise 3–5 days/week" },
-  { id: "active",      emoji: "🚴", label: "Very active",        sub: "Hard exercise 6–7 days/week" },
-  { id: "very_active", emoji: "⚡", label: "Super active",       sub: "Physical job + daily exercise" },
-];
+const ACTIVITY_EMOJIS: Record<string, string> = {
+  sedentary: "🛋️", light: "🚶", moderate: "🏋️", active: "🚴", very_active: "⚡",
+};
 
-const DURATION_OPTIONS: { weeks: number; label: string; sub: string }[] = [
-  { weeks: 4,  label: "4 weeks",  sub: "Quick sprint" },
-  { weeks: 8,  label: "8 weeks",  sub: "Short term" },
-  { weeks: 12, label: "12 weeks", sub: "3 months · Recommended" },
-  { weeks: 16, label: "16 weeks", sub: "4 months" },
-  { weeks: 20, label: "20 weeks", sub: "5 months" },
-];
+const DURATION_WEEKS = [4, 8, 12, 16, 20] as const;
 
 interface DraftState {
   stepIndex: number;
@@ -218,6 +201,7 @@ export default function OnboardingScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { userId, setHasProfile } = useApp();
+  const { t } = useI18n();
 
   const [stepIndex, setStepIndex] = useState(0);
   const [gender, setGender] = useState<"male" | "female">("male");
@@ -230,6 +214,37 @@ export default function OnboardingScreen() {
   const [activity, setActivity] = useState("moderate");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loaded, setLoaded] = useState(false);
+
+  const STEP_META: Record<StepId, { emoji: string; title: string; subtitle: string }> = {
+    gender:   { emoji: STEP_EMOJIS.gender,   title: t("onb_gender_title"),   subtitle: t("onb_gender_sub") },
+    age:      { emoji: STEP_EMOJIS.age,      title: t("onb_age_title"),      subtitle: t("onb_age_sub") },
+    height:   { emoji: STEP_EMOJIS.height,   title: t("onb_height_title"),   subtitle: t("onb_height_sub") },
+    weight:   { emoji: STEP_EMOJIS.weight,   title: t("onb_weight_title"),   subtitle: t("onb_weight_sub") },
+    duration: { emoji: STEP_EMOJIS.duration, title: t("onb_duration_title"), subtitle: t("onb_duration_sub") },
+    goal:     { emoji: STEP_EMOJIS.goal,     title: t("onb_goal_title"),     subtitle: t("onb_goal_sub") },
+    activity: { emoji: STEP_EMOJIS.activity, title: t("onb_activity_title"), subtitle: t("onb_activity_sub") },
+    confirm:  { emoji: STEP_EMOJIS.confirm,  title: t("onb_confirm_title"),  subtitle: t("onb_confirm_sub") },
+  };
+
+  const GOALS = [
+    { id: "lose",     emoji: GOAL_EMOJIS.lose,     label: t("goal_lose"),     sub: t("goal_lose_sub") },
+    { id: "maintain", emoji: GOAL_EMOJIS.maintain,  label: t("goal_maintain"), sub: t("goal_maintain_sub") },
+    { id: "gain",     emoji: GOAL_EMOJIS.gain,      label: t("goal_gain"),     sub: t("goal_gain_sub") },
+  ];
+
+  const ACTIVITIES = [
+    { id: "sedentary",   emoji: ACTIVITY_EMOJIS.sedentary,   label: t("activity_sedentary"),   sub: t("activity_sedentary_sub") },
+    { id: "light",       emoji: ACTIVITY_EMOJIS.light,       label: t("activity_light"),       sub: t("activity_light_sub") },
+    { id: "moderate",    emoji: ACTIVITY_EMOJIS.moderate,    label: t("activity_moderate"),    sub: t("activity_moderate_sub") },
+    { id: "active",      emoji: ACTIVITY_EMOJIS.active,      label: t("activity_active"),      sub: t("activity_active_sub") },
+    { id: "very_active", emoji: ACTIVITY_EMOJIS.very_active, label: t("activity_very_active"), sub: t("activity_very_active_sub") },
+  ];
+
+  const DURATION_OPTIONS = DURATION_WEEKS.map((weeks) => ({
+    weeks,
+    label: t("dur_weeks_label").replace("{n}", String(weeks)),
+    sub: t(`dur_${weeks}w_sub`),
+  }));
 
   const step = STEPS[stepIndex] ?? "gender";
   const meta = STEP_META[step];
@@ -303,7 +318,7 @@ export default function OnboardingScreen() {
 
   if (!loaded) return null;
 
-  const ctaLabel = step !== "confirm" ? "Continue" : isSubmitting ? "Setting up…" : "Start Tracking";
+  const ctaLabel = step !== "confirm" ? t("onb_continue") : isSubmitting ? t("onb_setting_up") : t("onb_start_tracking");
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background, paddingTop: insets.top }}>
@@ -374,7 +389,7 @@ export default function OnboardingScreen() {
                         fontFamily: "Inter_600SemiBold",
                         color: active ? colors.primaryForeground : colors.foreground,
                       }}>
-                        {g === "male" ? "Male" : "Female"}
+                        {g === "male" ? t("pd_male") : t("pd_female")}
                       </Text>
                     </TouchableOpacity>
                   );
@@ -413,7 +428,7 @@ export default function OnboardingScreen() {
                   onChangeText={(v) => setWeightKg(v.replace(/[^0-9.]/g, ""))}
                   unit="kg"
                   placeholder="70"
-                  label="Current weight"
+                  label={t("onb_current_weight_label")}
                   colors={colors}
                 />
                 <BigNumericInput
@@ -421,7 +436,7 @@ export default function OnboardingScreen() {
                   onChangeText={(v) => setTargetWeightKg(v.replace(/[^0-9.]/g, ""))}
                   unit="kg"
                   placeholder="65"
-                  label="Target weight"
+                  label={t("onb_target_weight_label")}
                   colors={colors}
                 />
               </View>
@@ -492,7 +507,7 @@ export default function OnboardingScreen() {
                       const dir = delta < 0 ? "lose" : delta > 0 ? "gain" : null;
                       if (!dir) return (
                         <Text style={{ fontSize: 13, fontFamily: "Inter_500Medium", color: colors.mutedForeground }}>
-                          Already at target weight 🎯
+                          {t("onb_at_target")}
                         </Text>
                       );
                       return (
@@ -676,25 +691,26 @@ function ConfirmStep({
   gender: string; birthYear: string; heightCm: string; weightKg: string;
   targetWeightKg: string; goalDurationWeeks: number; goal: string; activity: string; colors: Colors;
 }) {
-  const goalLabel = GOALS.find((g) => g.id === goal)?.label ?? goal;
-  const actLabel = ACTIVITIES.find((a) => a.id === activity)?.label ?? activity;
+  const { t } = useI18n();
+  const goalLabel = t(`goal_${goal}`) || goal;
+  const actLabel = t(`activity_${activity}`) || activity;
   const targets = calculateDailyTargets({ gender, birthYear, heightCm, weightKg, goal, activity });
 
   const profileRows = [
-    { label: "Gender",        value: gender === "male" ? "Male" : "Female",   emoji: "🧬" },
-    { label: "Birth year",    value: birthYear,                                emoji: "🎂" },
-    { label: "Height",        value: `${heightCm} cm`,                        emoji: "📏" },
-    { label: "Weight",        value: `${weightKg} → ${targetWeightKg} kg`,    emoji: "⚖️" },
-    { label: "Plan duration", value: `${goalDurationWeeks} weeks`,             emoji: "📅" },
-    { label: "Goal",          value: goalLabel,                                emoji: "🎯" },
-    { label: "Activity",      value: actLabel,                                 emoji: "🏃" },
+    { label: t("pd_gender"),          value: gender === "male" ? t("pd_male") : t("pd_female"),           emoji: "🧬" },
+    { label: t("pd_birth_year"),      value: birthYear,                                                    emoji: "🎂" },
+    { label: t("pd_height"),          value: `${heightCm} cm`,                                            emoji: "📏" },
+    { label: t("pd_current_weight"),  value: `${weightKg} → ${targetWeightKg} kg`,                       emoji: "⚖️" },
+    { label: t("onb_plan_duration"),  value: t("dur_weeks_label").replace("{n}", String(goalDurationWeeks)), emoji: "📅" },
+    { label: t("goal_label"),         value: goalLabel,                                                    emoji: "🎯" },
+    { label: t("activity_label"),     value: actLabel,                                                     emoji: "🏃" },
   ];
 
   const macroRows = [
-    { label: "Calories", value: `${targets.calories} kcal`, color: colors.foreground },
-    { label: "Protein",  value: `${targets.proteinG} g`,    color: colors.proteinColor },
-    { label: "Carbs",    value: `${targets.carbsG} g`,      color: colors.carbsColor },
-    { label: "Fat",      value: `${targets.fatG} g`,        color: colors.fatColor },
+    { label: t("calories"),  value: `${targets.calories} kcal`, color: colors.foreground },
+    { label: t("protein"),   value: `${targets.proteinG} g`,    color: colors.proteinColor },
+    { label: t("carbs"),     value: `${targets.carbsG} g`,      color: colors.carbsColor },
+    { label: t("fat"),       value: `${targets.fatG} g`,        color: colors.fatColor },
   ];
 
   return (
@@ -741,7 +757,7 @@ function ConfirmStep({
       }}>
         <View style={{ paddingHorizontal: 18, paddingTop: 14, paddingBottom: 4 }}>
           <Text style={{ fontSize: 13, fontFamily: "Inter_600SemiBold", color: colors.mutedForeground, letterSpacing: 0.5 }}>
-            DAILY TARGETS
+            {t("nutrition_targets_title").toUpperCase()}
           </Text>
         </View>
         {macroRows.map(({ label, value, color }, i) => (

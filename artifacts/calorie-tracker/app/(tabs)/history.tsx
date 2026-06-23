@@ -799,7 +799,7 @@ function WeightLineChart({
   colors: AppColors;
 }) {
   const { t } = useI18n();
-  const chartW = SCREEN_WIDTH - 40 - 32;
+  const [chartW, setChartW] = useState(SCREEN_WIDTH - 40 - 32);
   const chartH = 120;
   const sorted = useMemo(
     () => [...weightLogs].sort((a, b) => a.date.localeCompare(b.date)),
@@ -813,7 +813,7 @@ function WeightLineChart({
     const currentY = chartH - ((fallbackWeightKg - minW) / range) * chartH;
     const targetY = chartH - ((targetWeightKg - minW) / range) * chartH;
     return (
-      <View style={{ marginTop: 8 }}>
+      <View style={{ marginTop: 8 }} onLayout={(e) => setChartW(e.nativeEvent.layout.width)}>
         <Svg width={chartW} height={chartH + 24}>
           <Line
             x1={0} y1={targetY} x2={chartW} y2={targetY}
@@ -860,7 +860,7 @@ function WeightLineChart({
   const firstPt = points[0]!;
 
   return (
-    <View style={{ marginTop: 8 }}>
+    <View style={{ marginTop: 8 }} onLayout={(e) => setChartW(e.nativeEvent.layout.width)}>
       <Svg width={chartW} height={chartH + 24}>
         <Line
           x1={0} y1={targetY} x2={chartW} y2={targetY}
@@ -897,7 +897,7 @@ function WeightLineChart({
 
 function BMIScale({ bmi, colors }: { bmi: number; colors: AppColors }) {
   const { t } = useI18n();
-  const scaleW = SCREEN_WIDTH - 40 - 32;
+  const [scaleW, setScaleW] = useState(SCREEN_WIDTH - 40 - 32);
   const segments = [
     { labelKey: "bmi_under", color: "#60a5fa", range: [0, 18.5] as [number, number] },
     { labelKey: "bmi_normal", color: "#00c46a", range: [18.5, 25] as [number, number] },
@@ -909,7 +909,7 @@ function BMIScale({ bmi, colors }: { bmi: number; colors: AppColors }) {
   const markerX = (clampedBmi / totalRange) * scaleW;
 
   return (
-    <View style={{ marginTop: 10 }}>
+    <View style={{ marginTop: 10 }} onLayout={(e) => setScaleW(e.nativeEvent.layout.width)}>
       <Svg width={scaleW} height={36}>
         {segments.map((seg, i) => {
           const x = (seg.range[0] / totalRange) * scaleW;
@@ -1138,12 +1138,16 @@ function AvgCaloriesTable({
     if (filtered.length === 0) return "—";
     const byDay = new Map<string, number>();
     for (const m of filtered) {
+      const cal = Number(m.totalCalories);
+      if (!Number.isFinite(cal)) continue;
       const key =
         m.localDate ?? new Date(m.createdAt).toLocaleDateString("sv");
-      byDay.set(key, (byDay.get(key) ?? 0) + m.totalCalories);
+      byDay.set(key, (byDay.get(key) ?? 0) + cal);
     }
     const vals = Array.from(byDay.values());
-    return `${Math.round(vals.reduce((s, v) => s + v, 0) / vals.length)} kcal`;
+    if (vals.length === 0) return "—";
+    const avg = Math.round(vals.reduce((s, v) => s + v, 0) / vals.length);
+    return Number.isFinite(avg) ? `${avg} kcal` : "—";
   }
 
   return (
@@ -1209,7 +1213,7 @@ function WeeklyChart({
   colors: AppColors;
 }) {
   const { t } = useI18n();
-  const chartW = SCREEN_WIDTH - 40 - 32;
+  const [chartW, setChartW] = useState(SCREEN_WIDTH - 40 - 32);
   const chartH = 130;
   const barCount = data.length;
   const colW = Math.floor((chartW - (barCount - 1) * 8) / barCount);
@@ -1223,52 +1227,54 @@ function WeeklyChart({
   );
 
   return (
-    <Svg width={chartW} height={chartH + 44}>
-      {target > 0 && (
-        <Line
-          x1={0} y1={chartH - (target / maxVal) * chartH}
-          x2={chartW} y2={chartH - (target / maxVal) * chartH}
-          stroke={colors.border} strokeWidth={1} strokeDasharray="4,4"
-        />
-      )}
-      {data.map((d, i) => {
-        const colX = i * (colW + 8);
-        const consumedH = Math.max(d.calories > 0 ? 4 : 0, (d.calories / maxVal) * chartH);
-        const burnedVal = d.calories > 0 ? tdee : 0;
-        const burnedH = Math.max(burnedVal > 0 ? 4 : 0, (burnedVal / maxVal) * chartH);
-        const consumedY = chartH - consumedH;
-        const burnedY = chartH - burnedH;
-        const isOver = target > 0 && d.calories > target;
-        return (
-          <React.Fragment key={i}>
-            <Rect
-              x={colX} y={consumedY} width={barW} height={consumedH} rx={4}
-              fill={isOver ? colors.destructive : d.calories > 0 ? colors.foreground : colors.border}
-              opacity={d.calories > 0 ? 1 : 0.3}
-            />
-            <Rect
-              x={colX + barW + pairGap} y={burnedY} width={barW} height={burnedH} rx={4}
-              fill={colors.accent} opacity={burnedVal > 0 ? 0.8 : 0.2}
-            />
-            <SvgText
-              x={colX + colW / 2} y={chartH + 16}
-              textAnchor="middle" fontSize={10}
-              fill={colors.mutedForeground} fontFamily="Inter_500Medium"
-            >
-              {d.label}
-            </SvgText>
-          </React.Fragment>
-        );
-      })}
-      <Rect x={0} y={chartH + 26} width={10} height={10} rx={3} fill={colors.foreground} />
-      <SvgText x={14} y={chartH + 36} fontSize={10} fill={colors.mutedForeground} fontFamily="Inter_400Regular">
-        {t("consumed_label")}
-      </SvgText>
-      <Rect x={84} y={chartH + 26} width={10} height={10} rx={3} fill={colors.accent} />
-      <SvgText x={98} y={chartH + 36} fontSize={10} fill={colors.mutedForeground} fontFamily="Inter_400Regular">
-        {t("burned_est_label")}
-      </SvgText>
-    </Svg>
+    <View onLayout={(e) => setChartW(e.nativeEvent.layout.width)}>
+      <Svg width={chartW} height={chartH + 44}>
+        {target > 0 && (
+          <Line
+            x1={0} y1={chartH - (target / maxVal) * chartH}
+            x2={chartW} y2={chartH - (target / maxVal) * chartH}
+            stroke={colors.border} strokeWidth={1} strokeDasharray="4,4"
+          />
+        )}
+        {data.map((d, i) => {
+          const colX = i * (colW + 8);
+          const consumedH = Math.max(d.calories > 0 ? 4 : 0, (d.calories / maxVal) * chartH);
+          const burnedVal = d.calories > 0 ? tdee : 0;
+          const burnedH = Math.max(burnedVal > 0 ? 4 : 0, (burnedVal / maxVal) * chartH);
+          const consumedY = chartH - consumedH;
+          const burnedY = chartH - burnedH;
+          const isOver = target > 0 && d.calories > target;
+          return (
+            <React.Fragment key={i}>
+              <Rect
+                x={colX} y={consumedY} width={barW} height={consumedH} rx={4}
+                fill={isOver ? colors.destructive : d.calories > 0 ? colors.foreground : colors.border}
+                opacity={d.calories > 0 ? 1 : 0.3}
+              />
+              <Rect
+                x={colX + barW + pairGap} y={burnedY} width={barW} height={burnedH} rx={4}
+                fill={colors.accent} opacity={burnedVal > 0 ? 0.8 : 0.2}
+              />
+              <SvgText
+                x={colX + colW / 2} y={chartH + 16}
+                textAnchor="middle" fontSize={10}
+                fill={colors.mutedForeground} fontFamily="Inter_500Medium"
+              >
+                {d.label}
+              </SvgText>
+            </React.Fragment>
+          );
+        })}
+        <Rect x={0} y={chartH + 26} width={10} height={10} rx={3} fill={colors.foreground} />
+        <SvgText x={14} y={chartH + 36} fontSize={10} fill={colors.mutedForeground} fontFamily="Inter_400Regular">
+          {t("consumed_label")}
+        </SvgText>
+        <Rect x={84} y={chartH + 26} width={10} height={10} rx={3} fill={colors.accent} />
+        <SvgText x={98} y={chartH + 36} fontSize={10} fill={colors.mutedForeground} fontFamily="Inter_400Regular">
+          {t("burned_est_label")}
+        </SvgText>
+      </Svg>
+    </View>
   );
 }
 

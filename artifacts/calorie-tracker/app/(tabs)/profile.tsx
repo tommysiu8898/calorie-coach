@@ -24,6 +24,7 @@ import { useApp } from "@/context/AppContext";
 import { useI18n } from "@/hooks/useI18n";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import * as ImagePicker from "expo-image-picker";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import LanguageModal, { LANGUAGES, type Language } from "@/components/LanguageModal";
 import { isHealthKitAvailable, refreshHealthConnection } from "@/lib/health";
@@ -358,12 +359,12 @@ function GoalEditorSection({ profile, colors, onSaved }: { profile: Profile; col
 
   function confirmStartNewPlan() {
     Alert.alert(
-      "Start new plan?",
-      `Today's weight (${profile.weightKg} kg) will become the new starting point. Your target weight and duration stay the same — you can adjust them below.`,
+      t("profile_start_new_plan_title"),
+      t("profile_start_new_plan_msg").replace("{n}", String(profile.weightKg)),
       [
-        { text: "Cancel", style: "cancel" },
+        { text: t("cancel"), style: "cancel" },
         {
-          text: "Start new plan",
+          text: t("profile_start_new_plan_btn"),
           style: "default",
           onPress: async () => {
             setResetting(true);
@@ -392,7 +393,7 @@ function GoalEditorSection({ profile, colors, onSaved }: { profile: Profile; col
               setEditStartWeight(String(currentWeight));
               onSaved();
               setExpanded(false);
-            } catch { Alert.alert("Error", "Could not reset plan. Please try again."); }
+            } catch { Alert.alert(t("error_title"), t("profile_could_not_reset")); }
             finally { setResetting(false); }
           },
         },
@@ -400,8 +401,8 @@ function GoalEditorSection({ profile, colors, onSaved }: { profile: Profile; col
     );
   }
 
-  const GOAL_LIST = Object.entries(GOALS);
-  const ACTIVITY_LIST = Object.entries(ACTIVITIES);
+  const GOAL_LIST = Object.keys(GOALS);
+  const ACTIVITY_LIST = Object.keys(ACTIVITIES);
 
   const currentWeightRow = profile.goalDurationWeeks
     ? `${profile.weightKg} kg → ${profile.targetWeightKg} kg · ${profile.goalDurationWeeks} wks`
@@ -416,12 +417,12 @@ function GoalEditorSection({ profile, colors, onSaved }: { profile: Profile; col
         <View style={{ padding: 16, borderTopWidth: 0.5, borderTopColor: colors.border }}>
           {/* Weight plan */}
           <Text style={{ fontSize: 13, fontFamily: "Inter_500Medium", color: colors.mutedForeground, marginBottom: 8 }}>
-            Weight plan
+            {t("onb_weight_plan")}
           </Text>
           <View style={{ flexDirection: "row", gap: 10, marginBottom: 6 }}>
             <View style={{ flex: 1 }}>
               <Text style={{ fontSize: 11, fontFamily: "Inter_400Regular", color: colors.mutedForeground, marginBottom: 4 }}>
-                Start weight (kg)
+                {t("onb_start_weight_kg")}
               </Text>
               <TextInput
                 value={editStartWeight}
@@ -444,7 +445,7 @@ function GoalEditorSection({ profile, colors, onSaved }: { profile: Profile; col
             </View>
             <View style={{ flex: 1 }}>
               <Text style={{ fontSize: 11, fontFamily: "Inter_400Regular", color: colors.mutedForeground, marginBottom: 4 }}>
-                Target weight (kg)
+                {t("onb_target_weight_kg")}
               </Text>
               <TextInput
                 value={editTargetWeight}
@@ -469,7 +470,7 @@ function GoalEditorSection({ profile, colors, onSaved }: { profile: Profile; col
 
           {/* Duration stepper */}
           <Text style={{ fontSize: 11, fontFamily: "Inter_400Regular", color: colors.mutedForeground, marginBottom: 4 }}>
-            Duration (weeks)
+            {t("onb_duration_weeks")}
           </Text>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 12, marginBottom: 10 }}>
             <TouchableOpacity
@@ -493,7 +494,7 @@ function GoalEditorSection({ profile, colors, onSaved }: { profile: Profile; col
           {Math.abs(dailyDeltaKg) > 0.001 && (
             <View style={{ backgroundColor: colors.muted, borderRadius: 10, padding: 10, marginBottom: 14, alignItems: "center" }}>
               <Text style={{ fontSize: 12, fontFamily: "Inter_500Medium", color: colors.mutedForeground }}>
-                {dailyDeltaKg < 0 ? "📉" : "📈"} {Math.abs(dailyDeltaKg).toFixed(2)} kg/day to {dailyDeltaKg < 0 ? "lose" : "gain"} in {editDurationWeeks} wks
+                {dailyDeltaKg < 0 ? "📉" : "📈"} {Math.abs(dailyDeltaKg).toFixed(2)} kg/day to {dailyDeltaKg < 0 ? t("onb_to_lose") : t("onb_to_gain")} in {editDurationWeeks} {t("dur_weeks_label").replace("{n}", "").trim()}
               </Text>
             </View>
           )}
@@ -501,7 +502,7 @@ function GoalEditorSection({ profile, colors, onSaved }: { profile: Profile; col
           {/* Goal type */}
           <Text style={{ fontSize: 13, fontFamily: "Inter_500Medium", color: colors.mutedForeground, marginBottom: 8 }}>{t("goal_label")}</Text>
           <View style={{ flexDirection: "row", gap: 8, marginBottom: 14 }}>
-            {GOAL_LIST.map(([id]) => (
+            {GOAL_LIST.map((id) => (
               <TouchableOpacity key={id} onPress={() => setGoal(id)} style={{ flex: 1, paddingVertical: 9, borderRadius: 10, borderWidth: 1.5, borderColor: goal === id ? colors.foreground : colors.border, backgroundColor: goal === id ? colors.foreground : colors.card, alignItems: "center" }}>
                 <Text style={{ fontSize: 11, fontFamily: "Inter_600SemiBold", color: goal === id ? colors.primaryForeground : colors.mutedForeground }}>{t(`goal_${id}`)}</Text>
               </TouchableOpacity>
@@ -509,7 +510,7 @@ function GoalEditorSection({ profile, colors, onSaved }: { profile: Profile; col
           </View>
           <Text style={{ fontSize: 13, fontFamily: "Inter_500Medium", color: colors.mutedForeground, marginBottom: 8 }}>{t("activity_label")}</Text>
           <View style={{ gap: 6, marginBottom: 14 }}>
-            {ACTIVITY_LIST.map(([id]) => (
+            {ACTIVITY_LIST.map((id) => (
               <TouchableOpacity key={id} onPress={() => setActivity(id)} style={{ paddingVertical: 10, paddingHorizontal: 14, borderRadius: 10, borderWidth: 1.5, borderColor: activity === id ? colors.foreground : colors.border, backgroundColor: activity === id ? colors.foreground : colors.card }}>
                 <Text style={{ fontSize: 14, fontFamily: "Inter_500Medium", color: activity === id ? colors.primaryForeground : colors.foreground }}>{t(`activity_${id}`)}</Text>
               </TouchableOpacity>
@@ -521,14 +522,14 @@ function GoalEditorSection({ profile, colors, onSaved }: { profile: Profile; col
             return (
               <View style={{ backgroundColor: colors.muted, borderRadius: 12, padding: 12, marginBottom: 14 }}>
                 <Text style={{ fontSize: 11, fontFamily: "Inter_600SemiBold", color: colors.mutedForeground, marginBottom: 8, letterSpacing: 0.5 }}>
-                  ESTIMATED DAILY TARGETS
+                  {t("onb_est_daily_targets").toUpperCase()}
                 </Text>
                 <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
                   {[
-                    { label: "Calories", value: `${p.dailyCalorieTarget}`, unit: "kcal", color: colors.calorieColor },
-                    { label: "Protein", value: `${p.dailyProteinTarget}`, unit: "g", color: colors.proteinColor },
-                    { label: "Carbs", value: `${p.dailyCarbsTarget}`, unit: "g", color: colors.carbsColor },
-                    { label: "Fat", value: `${p.dailyFatTarget}`, unit: "g", color: colors.fatColor },
+                    { label: t("calories"), value: `${p.dailyCalorieTarget}`, unit: "kcal", color: colors.calorieColor },
+                    { label: t("protein"),  value: `${p.dailyProteinTarget}`, unit: "g", color: colors.proteinColor },
+                    { label: t("carbs"),    value: `${p.dailyCarbsTarget}`, unit: "g", color: colors.carbsColor },
+                    { label: t("fat"),      value: `${p.dailyFatTarget}`, unit: "g", color: colors.fatColor },
                   ].map(({ label, value, unit, color }) => (
                     <View key={label} style={{ alignItems: "center", flex: 1 }}>
                       <Text style={{ fontSize: 16, fontFamily: "Inter_700Bold", color }}>{value}</Text>
@@ -560,7 +561,7 @@ function GoalEditorSection({ profile, colors, onSaved }: { profile: Profile; col
             }}
           >
             <Text style={{ fontSize: 14, fontFamily: "Inter_600SemiBold", color: colors.mutedForeground }}>
-              {resetting ? "Restarting…" : "↺  Start new plan"}
+              {resetting ? t("onb_restarting") : t("onb_start_new_plan")}
             </Text>
           </TouchableOpacity>
         </View>
@@ -830,10 +831,10 @@ export default function ProfileScreen() {
       <Animated.View entering={FadeInDown.delay(200)}>
         <SectionHeader label={t("support_legal")} colors={colors} />
         <SectionCard colors={colors}>
-          <SettingsRow label={t("help_center")} icon="help-circle-outline" onPress={() => {}} colors={colors} />
-          <SettingsRow label={t("privacy_policy")} icon="shield-outline" onPress={() => {}} colors={colors} />
-          <SettingsRow label={t("terms_of_service")} icon="document-text-outline" onPress={() => {}} colors={colors} />
-          <SettingsRow label={t("contact_us")} icon="mail-outline" onPress={() => {}} colors={colors} last />
+          <SettingsRow label={t("help_center")} icon="help-circle-outline" onPress={() => Linking.openURL("https://caloriecoach.app/help")} colors={colors} />
+          <SettingsRow label={t("privacy_policy")} icon="shield-outline" onPress={() => Linking.openURL("https://caloriecoach.app/privacy")} colors={colors} />
+          <SettingsRow label={t("terms_of_service")} icon="document-text-outline" onPress={() => Linking.openURL("https://caloriecoach.app/terms")} colors={colors} />
+          <SettingsRow label={t("contact_us")} icon="mail-outline" onPress={() => Linking.openURL("mailto:support@caloriecoach.app")} colors={colors} last />
         </SectionCard>
       </Animated.View>
 
@@ -885,7 +886,7 @@ export default function ProfileScreen() {
             label={t("delete_account")}
             icon="trash-outline"
             destructive
-            onPress={() => Alert.alert(t("delete_account"), "This will permanently delete all your data. This action cannot be undone.", [{ text: "Cancel", style: "cancel" }, { text: "Delete", style: "destructive", onPress: () => {} }])}
+            onPress={() => Alert.alert(t("delete_account"), "This will permanently delete all your data. This action cannot be undone.", [{ text: "Cancel", style: "cancel" }, { text: "Delete", style: "destructive", onPress: () => { AsyncStorage.clear().finally(() => { signOut().catch(() => {}); }); } }])}
             colors={colors}
             last
           />

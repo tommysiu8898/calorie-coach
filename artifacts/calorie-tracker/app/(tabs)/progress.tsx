@@ -104,18 +104,17 @@ function WeeklyChart({
   colors: AppColors;
 }) {
   const { t } = useI18n();
-  const chartW = SCREEN_WIDTH - 40 - 32;
+  const [chartW, setChartW] = React.useState(SCREEN_WIDTH - 40 - 32);
   const chartH = 130;
   const barCount = data.length;
   const colW = Math.floor((chartW - (barCount - 1) * 8) / barCount);
   const pairGap = 2;
   const barW = Math.floor((colW - pairGap) / 2);
-  // burnedByDate being non-null signals that we are connected and have fetched HealthKit data.
-  // Use key existence (not value > 0) to decide per-day so that valid zeros aren't overwritten by estimates.
   const isUsingHealthData = burnedByDate !== null && burnedByDate !== undefined;
   const maxVal = Math.max(target * 1.15, tdee * 1.05, ...data.map((d) => d.calories), 100);
 
   return (
+    <View onLayout={(e) => setChartW(e.nativeEvent.layout.width)}>
     <Svg width={chartW} height={chartH + 44}>
       {target > 0 && (
         <Line
@@ -159,13 +158,14 @@ function WeeklyChart({
         {isUsingHealthData ? t("activity_active_cal") : t("burned_est_label")}
       </SvgText>
     </Svg>
+    </View>
   );
 }
 
 // BMI colored scale bar
 function BMIScale({ bmi, colors }: { bmi: number; colors: AppColors }) {
   const { t } = useI18n();
-  const scaleW = SCREEN_WIDTH - 40 - 32;
+  const [scaleW, setScaleW] = React.useState(SCREEN_WIDTH - 40 - 32);
   const segments = [
     { labelKey: "bmi_under", color: "#60a5fa", range: [0, 18.5] as [number, number] },
     { labelKey: "bmi_normal", color: "#00c46a", range: [18.5, 25] as [number, number] },
@@ -177,7 +177,10 @@ function BMIScale({ bmi, colors }: { bmi: number; colors: AppColors }) {
   const markerX = (clampedBmi / totalRange) * scaleW;
 
   return (
-    <View style={{ marginTop: 10 }}>
+    <View
+      style={{ marginTop: 10 }}
+      onLayout={(e) => setScaleW(e.nativeEvent.layout.width)}
+    >
       <Svg width={scaleW} height={36}>
         {segments.map((seg, i) => {
           const x = (seg.range[0] / totalRange) * scaleW;

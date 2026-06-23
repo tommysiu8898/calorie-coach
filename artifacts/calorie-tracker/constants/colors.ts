@@ -1,92 +1,94 @@
 const colors = {
   light: {
-    text: "#111827",
-    tint: "#111827",
+    text: "#1A1A18",
+    tint: "#16A34A",
 
-    background: "#ffffff",
-    foreground: "#111827",
+    background: "#F8F8F5",
+    foreground: "#1A1A18",
 
-    card: "#ffffff",
-    cardForeground: "#111827",
+    card: "#FFFFFF",
+    cardBorder: "#E6E6E0",
+    cardForeground: "#1A1A18",
 
-    primary: "#111827",
-    primaryForeground: "#ffffff",
+    primary: "#1A1A18",
+    primaryForeground: "#FFFFFF",
 
-    secondary: "#f3f4f6",
-    secondaryForeground: "#111827",
+    secondary: "#F0F0EC",
+    secondaryForeground: "#1A1A18",
 
-    muted: "#f3f4f6",
-    mutedForeground: "#6b7280",
+    muted: "#F0F0EC",
+    mutedForeground: "#78786E",
 
-    accent: "#00c46a",
-    accentForeground: "#ffffff",
+    accent: "#16A34A",
+    accentForeground: "#FFFFFF",
 
-    destructive: "#ef4444",
-    destructiveForeground: "#ffffff",
+    destructive: "#DC2626",
+    destructiveForeground: "#FFFFFF",
 
-    border: "#e5e7eb",
-    input: "#e5e7eb",
+    border: "#E6E6E0",
+    input: "#E6E6E0",
 
-    calorieColor: "#111827",
-    calorieRingBg: "#f3f4f6",
-    proteinColor: "#f43f5e",
-    carbsColor: "#f59e0b",
-    fatColor: "#3b82f6",
+    calorieColor: "#1A1A18",
+    calorieRingBg: "#F0F0EC",
+    proteinColor: "#E11D48",
+    carbsColor: "#B45309",
+    fatColor: "#2563EB",
 
-    highConfidence: "#00c46a",
+    highConfidence: "#16A34A",
     mediumConfidence: "#f59e0b",
-    lowConfidence: "#ef4444",
+    lowConfidence: "#DC2626",
 
-    surface: "#ffffff",
-    surfaceAlt: "#f9fafb",
+    surface: "#FFFFFF",
+    surfaceAlt: "#F8F8F5",
 
-    green: "#00c46a",
-    greenForeground: "#ffffff",
+    green: "#16A34A",
+    greenForeground: "#FFFFFF",
   },
 
   dark: {
-    text: "#f1f5f9",
-    tint: "#00c46a",
+    text: "#EEEEE9",
+    tint: "#16A34A",
 
-    background: "#0a0f0d",
-    foreground: "#f1f5f9",
+    background: "#0D0D0B",
+    foreground: "#EEEEE9",
 
-    card: "#111a14",
-    cardForeground: "#f1f5f9",
+    card: "#161614",
+    cardBorder: "#252520",
+    cardForeground: "#EEEEE9",
 
-    primary: "#00c46a",
-    primaryForeground: "#0a0f0d",
+    primary: "#16A34A",
+    primaryForeground: "#FFFFFF",
 
-    secondary: "#162b1e",
-    secondaryForeground: "#86efac",
+    secondary: "#1D1D1A",
+    secondaryForeground: "#EEEEE9",
 
-    muted: "#1e2d24",
-    mutedForeground: "#94a3b8",
+    muted: "#1D1D1A",
+    mutedForeground: "#8A8A82",
 
-    accent: "#00c46a",
-    accentForeground: "#0a0f0d",
+    accent: "#16A34A",
+    accentForeground: "#FFFFFF",
 
-    destructive: "#ef4444",
-    destructiveForeground: "#ffffff",
+    destructive: "#EF4444",
+    destructiveForeground: "#FFFFFF",
 
-    border: "#1e2d24",
-    input: "#1e2d24",
+    border: "#252520",
+    input: "#252520",
 
-    calorieColor: "#00c46a",
-    calorieRingBg: "#1e2d24",
-    proteinColor: "#f43f5e",
-    carbsColor: "#fbbf24",
-    fatColor: "#60a5fa",
+    calorieColor: "#16A34A",
+    calorieRingBg: "#1D1D1A",
+    proteinColor: "#F43F5E",
+    carbsColor: "#FBBF24",
+    fatColor: "#60A5FA",
 
-    highConfidence: "#00c46a",
-    mediumConfidence: "#fbbf24",
-    lowConfidence: "#ef4444",
+    highConfidence: "#16A34A",
+    mediumConfidence: "#FBBF24",
+    lowConfidence: "#EF4444",
 
-    surface: "#111a14",
-    surfaceAlt: "#0a0f0d",
+    surface: "#161614",
+    surfaceAlt: "#0D0D0B",
 
-    green: "#00c46a",
-    greenForeground: "#0a0f0d",
+    green: "#16A34A",
+    greenForeground: "#FFFFFF",
   },
 
   radius: 12,
