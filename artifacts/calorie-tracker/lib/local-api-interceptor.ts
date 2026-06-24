@@ -565,11 +565,12 @@ _g.fetch = async function patchedFetch(
     : input instanceof URL ? input.toString()
     : (input as Request).url;
 
-  // Intercept ANY call to our backend API — but NEVER the real Kimi/Moonshot API.
-  // We match on "/api/" so it works whether EXPO_PUBLIC_DOMAIN is set, empty,
-  // an ngrok tunnel, or "undefined". Kimi calls (api.moonshot.cn) pass through.
+  // Intercept ANY call to our backend API — but NEVER the real Kimi/Moonshot API
+  // and NEVER calls to the real deployed backend (EXPO_PUBLIC_DOMAIN).
   const isKimi = url.includes("moonshot.cn") || url.includes("api.moonshot");
-  if (!isKimi && url.includes("/api/")) {
+  const domain = process.env.EXPO_PUBLIC_DOMAIN;
+  const isRealBackend = domain && domain !== "undefined" && url.includes(domain);
+  if (!isKimi && !isRealBackend && url.includes("/api/")) {
     const path    = url.replace(/^https?:\/\/[^/]+/, "");
     const method  = (init?.method ?? (typeof input !== "string" && !(input instanceof URL) ? (input as Request).method : undefined) ?? "GET").toUpperCase();
     let body: Record<string, unknown> = {};
