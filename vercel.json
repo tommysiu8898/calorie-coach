@@ -1,0 +1,12 @@
+{
+  "buildCommand": "pnpm install && pnpm --filter @workspace/api-server run build:vercel",
+  "functions": {
+    "api/index.js": {
+      "maxDuration": 30,
+      "memory": 512
+    }
+  },
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/api" }
+  ]
+}
