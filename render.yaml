@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: calorie-coach-api
+    runtime: node
+    region: singapore
+    plan: free
+    buildCommand: pnpm install && pnpm --filter @workspace/api-server run build
+    startCommand: node --enable-source-maps artifacts/api-server/dist/index.mjs
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_VERSION
+        value: "20"
+      # Set these in the Render dashboard (Environment tab):
+      # DATABASE_URL         — Neon Postgres connection string
+      # CLERK_PUBLISHABLE_KEY — from Clerk dashboard (Apps → your app → API Keys)
+      # CLERK_SECRET_KEY     — from Clerk dashboard (Apps → your app → API Keys)
+      # KIMI_API_KEY         — for AI food analysis and coach features
+      # AI_INTEGRATIONS_OPENROUTER_API_KEY  — (optional) OpenRouter key for coach AI
+      # AI_INTEGRATIONS_OPENROUTER_BASE_URL — (optional) https://openrouter.ai/api/v1
