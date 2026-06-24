@@ -71,7 +71,10 @@ async function searchOverpass(lat: number, lng: number, query: string): Promise<
   try {
     const resp = await fetch("https://overpass-api.de/api/interpreter", {
       method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "User-Agent": "CalorieCoachApp/1.0 (contact: kenyuen1019@gmail.com)",
+      },
       body: `data=${encodeURIComponent(oql)}`,
       signal: controller.signal,
     });
