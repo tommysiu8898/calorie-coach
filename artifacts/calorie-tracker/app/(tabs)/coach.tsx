@@ -29,6 +29,74 @@ const safeOpenSettings = () => {
   }
 };
 
+function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * (Math.PI / 180);
+  const dLon = (lon2 - lon1) * (Math.PI / 180);
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) * Math.sin(dLon / 2) ** 2;
+  return parseFloat((R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))).toFixed(1));
+}
+
+const OVERPASS_TAGS: Record<string, string> = {
+  gym:        `["leisure"="fitness_centre"]`,
+  fitness:    `["leisure"="fitness_centre"]`,
+  "健身房":   `["leisure"="fitness_centre"]`,
+  "健身中心": `["leisure"="fitness_centre"]`,
+  yoga:       `["sport"="yoga"]`,
+  "瑜伽":     `["sport"="yoga"]`,
+  swimming:   `["leisure"="swimming_pool"]["access"!="private"]`,
+  pool:       `["leisure"="swimming_pool"]["access"!="private"]`,
+  "游泳池":   `["leisure"="swimming_pool"]["access"!="private"]`,
+  park:       `["leisure"="park"]`,
+  nature:     `["leisure"="park"]`,
+  outdoor:    `["leisure"="park"]`,
+  "公園":     `["leisure"="park"]`,
+  "公园":     `["leisure"="park"]`,
+  restaurant: `["amenity"="restaurant"]`,
+  "餐廳":     `["amenity"="restaurant"]`,
+  "餐厅":     `["amenity"="restaurant"]`,
+  "餐館":     `["amenity"="restaurant"]`,
+  "食肆":     `["amenity"="restaurant"]`,
+};
+
+async function searchNearbyOverpass(lat: number, lng: number, query: string): Promise<PlaceResult[]> {
+  const lower = query.trim().toLowerCase();
+  const tag = Object.entries(OVERPASS_TAGS).find(([k]) => lower.includes(k.toLowerCase()))?.[1]
+    ?? `["leisure"="fitness_centre"]`;
+  const oql = `[out:json][timeout:15];(node${tag}(around:5000,${lat},${lng});way${tag}(around:5000,${lat},${lng}););out center 10;`;
+  const resp = await fetch("https://overpass-api.de/api/interpreter", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: `data=${encodeURIComponent(oql)}`,
+  });
+  if (!resp.ok) throw new Error(`Overpass error ${resp.status}`);
+  const data = await resp.json() as {
+    elements?: Array<{
+      lat?: number; lon?: number;
+      center?: { lat: number; lon: number };
+      tags?: Record<string, string>;
+    }>;
+  };
+  return (data.elements ?? [])
+    .filter((el) => el.tags?.name)
+    .map((el) => {
+      const pLat = el.lat ?? el.center?.lat ?? lat;
+      const pLng = el.lon ?? el.center?.lon ?? lng;
+      const tags = el.tags ?? {};
+      const addrParts = [tags["addr:housenumber"], tags["addr:street"], tags["addr:city"] ?? tags["addr:suburb"]].filter(Boolean);
+      return {
+        name: tags.name ?? "",
+        address: addrParts.join(", "),
+        rating: null,
+        distance: haversineKm(lat, lng, pLat, pLng),
+        mapsUrl: `https://maps.google.com/?q=${pLat},${pLng}`,
+      };
+    })
+    .sort((a, b) => (a.distance ?? 99) - (b.distance ?? 99));
+}
+
 type MessageRole = "user" | "agent";
 
 interface BaseMessage {
@@ -838,27 +906,33 @@ export default function CoachScreen() {
       });
 
       const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
-      const res = await fetch(`${baseUrl}/api/search-nearby`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          query: category,
-          lat: loc.coords.latitude,
-          lng: loc.coords.longitude,
-          appLanguage: languageCodeRef.current,
-        }),
-      });
-      const data = await res.json() as {
-        success: boolean; places?: PlaceResult[]; error?: string; warning?: string;
-      };
-      if (!data.success && !data.warning) throw new Error(data.error ?? "Failed");
-      if (data.warning) {
-        appendMessage({ id: genId(), role: "agent", type: "text", text: data.warning, timestamp: new Date() });
-        return;
+      let places: PlaceResult[];
+      if (process.env.EXPO_PUBLIC_DOMAIN) {
+        const res = await fetch(`${baseUrl}/api/search-nearby`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            query: category,
+            lat: loc.coords.latitude,
+            lng: loc.coords.longitude,
+            appLanguage: languageCodeRef.current,
+          }),
+        });
+        const data = await res.json() as {
+          success: boolean; places?: PlaceResult[]; error?: string; warning?: string;
+        };
+        if (!data.success && !data.warning) throw new Error(data.error ?? "Failed");
+        if (data.warning) {
+          appendMessage({ id: genId(), role: "agent", type: "text", text: data.warning, timestamp: new Date() });
+          return;
+        }
+        places = data.places ?? [];
+      } else {
+        places = await searchNearbyOverpass(loc.coords.latitude, loc.coords.longitude, category);
       }
       appendMessage({
         id: genId(), role: "agent", type: "nearby",
-        places: data.places ?? [],
+        places,
         placeType: category,
         timestamp: new Date(),
       });

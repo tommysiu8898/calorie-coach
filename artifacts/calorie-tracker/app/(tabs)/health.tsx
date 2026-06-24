@@ -17,6 +17,7 @@ import { useI18n } from "@/hooks/useI18n";
 import { useApp } from "@/context/AppContext";
 import {
   isHealthConnected,
+  isHealthKitAvailable,
   getTodayHealthActivity,
   getWeeklyActiveCalories,
   getTodaySleepHours,
@@ -362,6 +363,37 @@ export default function HealthScreen() {
       </View>
 
       <>
+          {/* Connect Apple Health banner — shown only when available but not yet connected */}
+          {isHealthKitAvailable() && !isConnected && (
+            <TouchableOpacity
+              onPress={() => router.push("/apple-health" as never)}
+              activeOpacity={0.8}
+              style={{
+                marginHorizontal: 20,
+                marginBottom: 16,
+                backgroundColor: "#22c55e18",
+                borderRadius: 16,
+                borderWidth: 1,
+                borderColor: "#22c55e33",
+                padding: 14,
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 10,
+              }}
+            >
+              <Text style={{ fontSize: 22 }}>❤️</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 14, fontFamily: "Inter_600SemiBold", color: "#22c55e" }}>
+                  {t("health_connect_btn")}
+                </Text>
+                <Text style={{ fontSize: 12, fontFamily: "Inter_400Regular", color: colors.mutedForeground, marginTop: 2 }}>
+                  {t("health_connect_in_settings_sub")}
+                </Text>
+              </View>
+              <Text style={{ fontSize: 16, color: colors.mutedForeground }}>›</Text>
+            </TouchableOpacity>
+          )}
+
           {/* Today's Activity section header */}
           <Text
             style={{
