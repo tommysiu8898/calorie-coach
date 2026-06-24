@@ -3,10 +3,12 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { build as esbuild } from "esbuild";
 import esbuildPluginPino from "esbuild-plugin-pino";
+import { rm } from "node:fs/promises";
 
 globalThis.require = createRequire(import.meta.url);
 
 const artifactDir = path.dirname(fileURLToPath(import.meta.url));
+const distDir = path.resolve(artifactDir, "dist");
 
 const external = [
   "*.node", "sharp", "better-sqlite3", "sqlite3", "canvas", "bcrypt", "argon2",
@@ -23,12 +25,15 @@ const external = [
   "zeromq", "zeromq-prebuilt", "playwright", "puppeteer", "puppeteer-core", "electron",
 ];
 
+await rm(distDir, { recursive: true, force: true });
+
 await esbuild({
   entryPoints: [path.resolve(artifactDir, "src/vercel-entry.ts")],
   platform: "node",
   bundle: true,
   format: "cjs",
-  outfile: path.resolve(artifactDir, "dist/vercel-handler.cjs"),
+  outdir: distDir,
+  outExtension: { ".js": ".cjs" },
   logLevel: "info",
   external,
   loader: { ".html": "text" },
