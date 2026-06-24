@@ -13,7 +13,7 @@
         "image": "latest"
       },
       "env": {
-        "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_test_YWJvdmUtZXdlLTE4LmNsZXJrLmFjY291bnRzLmRldiQ",
+        "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_test_bHVja3ktcm9kZW50LTU1LmNsZXJrLmFjY291bnRzLmRldiQ",
         "EXPO_PUBLIC_REPL_ID": "9dbd35a4-ef5e-4ed0-94ae-93e65aa93bf5"
       }
     },
@@ -26,7 +26,7 @@
       },
       "channel": "development",
       "env": {
-        "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_test_YWJvdmUtZXdlLTE4LmNsZXJrLmFjY291bnRzLmRldiQ",
+        "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_test_bHVja3ktcm9kZW50LTU1LmNsZXJrLmFjY291bnRzLmRldiQ",
         "EXPO_PUBLIC_REPL_ID": "9dbd35a4-ef5e-4ed0-94ae-93e65aa93bf5"
       }
     },
@@ -38,7 +38,7 @@
         "image": "latest"
       },
       "env": {
-        "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_test_YWJvdmUtZXdlLTE4LmNsZXJrLmFjY291bnRzLmRldiQ"
+        "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_test_bHVja3ktcm9kZW50LTU1LmNsZXJrLmFjY291bnRzLmRldiQ"
       }
     },
     "production": {
@@ -48,7 +48,7 @@
         "image": "latest"
       },
       "env": {
-        "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_test_YWJvdmUtZXdlLTE4LmNsZXJrLmFjY291bnRzLmRldiQ"
+        "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_test_bHVja3ktcm9kZW50LTU1LmNsZXJrLmFjY291bnRzLmRldiQ"
       }
     },
     "internal-test": {
@@ -58,7 +58,7 @@
         "image": "latest"
       },
       "env": {
-        "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_test_YWJvdmUtZXdlLTE4LmNsZXJrLmFjY291bnRzLmRldiQ",
+        "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_test_bHVja3ktcm9kZW50LTU1LmNsZXJrLmFjY291bnRzLmRldiQ",
         "EXPO_PUBLIC_REPL_ID": "9dbd35a4-ef5e-4ed0-94ae-93e65aa93bf5"
       }
     },
@@ -69,7 +69,7 @@
         "image": "latest"
       },
       "env": {
-        "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_test_YWJvdmUtZXdlLTE4LmNsZXJrLmFjY291bnRzLmRldiQ",
+        "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_test_bHVja3ktcm9kZW50LTU1LmNsZXJrLmFjY291bnRzLmRldiQ",
         "EXPO_PUBLIC_REPL_ID": "9dbd35a4-ef5e-4ed0-94ae-93e65aa93bf5"
       }
     }
