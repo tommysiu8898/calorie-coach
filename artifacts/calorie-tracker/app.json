@@ -76,7 +76,8 @@
           "healthSharePermission": "Calories Coach reads your steps, active calories, and workouts from Apple Health to show your full energy balance.",
           "healthUpdatePermission": "Calories Coach reads health data to calculate your net calorie balance."
         }
-      ]
+      ],
+      "./plugins/withModularHeaders"
     ],
     "experiments": {
       "typedRoutes": true,
