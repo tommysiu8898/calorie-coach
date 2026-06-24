@@ -48,7 +48,8 @@
         "image": "latest"
       },
       "env": {
-        "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_test_bHVja3ktcm9kZW50LTU1LmNsZXJrLmFjY291bnRzLmRldiQ"
+        "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_test_bHVja3ktcm9kZW50LTU1LmNsZXJrLmFjY291bnRzLmRldiQ",
+        "EXPO_PUBLIC_DOMAIN": "calorie-coach-api-server.vercel.app"
       }
     },
     "internal-test": {
